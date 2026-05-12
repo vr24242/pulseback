@@ -3,7 +3,7 @@ import { json } from "@remix-run/node"
 import { useLoaderData, useActionData, Form, useNavigation } from "@remix-run/react"
 import {
   Page, Layout, Card, FormLayout, TextField, Button, Banner,
-  Text, BlockStack, Divider, Badge, InlineStack,
+  Text, BlockStack, Divider, Badge, InlineStack, Box,
 } from "@shopify/polaris"
 import { authenticate } from "../shopify.server"
 import { db } from "@d2c/database"
@@ -13,6 +13,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const shop = await db.shop.findUnique({
     where: { domain: session.shop },
     select: {
+      aiSensyApiKey: true,
+      watiApiToken: true,
+      watiPhoneNumber: true,
       waPhoneNumberId: true,
       waBusinessAccountId: true,
       waVerifyToken: true,
@@ -21,31 +24,25 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       dispatchSlaHours: true,
     },
   })
-  return json({ shop })
+  return json({ shop, domain: session.shop })
 }
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const { session } = await authenticate.admin(request)
   const formData = await request.formData()
 
-  const waPhoneNumberId     = formData.get("waPhoneNumberId") as string
-  const waAccessToken       = formData.get("waAccessToken") as string
-  const waBusinessAccountId = formData.get("waBusinessAccountId") as string
-  const waVerifyToken       = formData.get("waVerifyToken") as string
-  const rtoThreshold        = parseInt(formData.get("rtoThreshold") as string) || 60
-  const dispatchSlaHours    = parseInt(formData.get("dispatchSlaHours") as string) || 24
-  const codEnabled          = formData.get("codEnabled") === "true"
-
   await db.shop.update({
     where: { domain: session.shop },
     data: {
-      waPhoneNumberId:     waPhoneNumberId     || undefined,
-      waAccessToken:       waAccessToken       || undefined,
-      waBusinessAccountId: waBusinessAccountId || undefined,
-      waVerifyToken:       waVerifyToken       || undefined,
-      rtoThreshold,
-      dispatchSlaHours,
-      codEnabled,
+      aiSensyApiKey:       (formData.get("aiSensyApiKey") as string)       || undefined,
+      watiApiToken:        (formData.get("watiApiToken") as string)         || undefined,
+      watiPhoneNumber:     (formData.get("watiPhoneNumber") as string)      || undefined,
+      waPhoneNumberId:     (formData.get("waPhoneNumberId") as string)      || undefined,
+      waAccessToken:       (formData.get("waAccessToken") as string)        || undefined,
+      waBusinessAccountId: (formData.get("waBusinessAccountId") as string)  || undefined,
+      waVerifyToken:       (formData.get("waVerifyToken") as string)        || undefined,
+      rtoThreshold:     parseInt(formData.get("rtoThreshold") as string)     || 60,
+      dispatchSlaHours: parseInt(formData.get("dispatchSlaHours") as string) || 24,
     },
   })
 
@@ -58,131 +55,212 @@ export default function Settings() {
   const nav = useNavigation()
   const saving = nav.state === "submitting"
 
-  const webhookUrl = "https://pulseback.fly.dev/api/whatsapp/webhook"
-  const cronUrl    = "https://pulseback.fly.dev/api/cron/abandoned"
+  const waWebhookUrl = "https://pulseback.fly.dev/api/whatsapp/webhook"
+  const cronUrl = "https://pulseback.fly.dev/api/cron/abandoned"
+
+  const hasAiSensy = !!shop?.aiSensyApiKey
+  const hasWATI    = !!shop?.watiApiToken
+  const hasMeta    = !!shop?.waPhoneNumberId
+
+  const activeProvider = hasAiSensy ? "AiSensy" : hasWATI ? "WATI" : hasMeta ? "Meta Cloud API" : null
 
   return (
-    <Page title="Settings" subtitle="Configure Pulseback integrations and automation rules">
+    <Page title="Settings" subtitle="Configure WhatsApp, automation rules, and integrations">
       <Layout>
         {actionData?.success && (
           <Layout.Section>
-            <Banner tone="success" title="Settings saved successfully." />
+            <Banner tone="success" title="Settings saved." />
           </Layout.Section>
         )}
 
-        {/* WhatsApp Cloud API */}
         <Layout.Section>
-          <Card>
-            <BlockStack gap="400">
-              <InlineStack align="space-between">
-                <Text variant="headingMd" as="h2">WhatsApp Business (Meta Cloud API)</Text>
-                <Badge tone={shop?.waPhoneNumberId ? "success" : "warning"}>
-                  {shop?.waPhoneNumberId ? "Connected" : "Not configured"}
-                </Badge>
-              </InlineStack>
-              <Text variant="bodySm" tone="subdued" as="p">
-                Connect your Meta WhatsApp Business account to send COD confirmations,
-                abandoned cart recovery, and order updates.
-              </Text>
-              <Divider />
-              <Form method="post">
-                <BlockStack gap="400">
-                  <FormLayout>
-                    <TextField
-                      label="Phone Number ID"
-                      name="waPhoneNumberId"
-                      defaultValue={shop?.waPhoneNumberId ?? ""}
-                      placeholder="1234567890123"
-                      helpText="Found in Meta Business Suite → WhatsApp → API Setup"
-                      autoComplete="off"
-                    />
-                    <TextField
-                      label="Permanent Access Token"
-                      name="waAccessToken"
-                      type="password"
-                      defaultValue=""
-                      placeholder="EAAxxxxx..."
-                      helpText="Generate from Meta Business Suite → System Users → Generate Token"
-                      autoComplete="off"
-                    />
-                    <TextField
-                      label="WhatsApp Business Account ID"
-                      name="waBusinessAccountId"
-                      defaultValue={shop?.waBusinessAccountId ?? ""}
-                      placeholder="1234567890123"
-                      helpText="Found in Meta Business Suite → Settings → Business Info"
-                      autoComplete="off"
-                    />
-                    <TextField
-                      label="Webhook Verify Token"
-                      name="waVerifyToken"
-                      defaultValue={shop?.waVerifyToken ?? "pulseback_verify"}
-                      helpText="Set this as the verify token in Meta App → Webhooks"
-                      autoComplete="off"
-                    />
-                  </FormLayout>
+          <Form method="post">
+            <BlockStack gap="500">
 
-                  <BlockStack gap="200">
-                    <Text variant="headingSm" as="h3">Webhook Configuration</Text>
+              {/* WhatsApp Provider */}
+              <Card>
+                <BlockStack gap="400">
+                  <InlineStack align="space-between">
+                    <Text variant="headingMd" as="h2">WhatsApp Integration</Text>
+                    <Badge tone={activeProvider ? "success" : "warning"}>
+                      {activeProvider ? `Active: ${activeProvider}` : "Not configured"}
+                    </Badge>
+                  </InlineStack>
+
+                  <Text variant="bodySm" tone="subdued" as="p">
+                    Configure one provider. Priority: AiSensy → WATI → Meta Cloud API.
+                    For Indian D2C, AiSensy is recommended — live in 2-4 hours, no Meta business verification needed.
+                  </Text>
+
+                  <Divider />
+
+                  {/* AiSensy — recommended */}
+                  <BlockStack gap="300">
+                    <InlineStack gap="200" align="start">
+                      <Text variant="headingSm" as="h3">Option 1: AiSensy</Text>
+                      <Badge tone="success">Recommended for India</Badge>
+                    </InlineStack>
                     <Text variant="bodySm" tone="subdued" as="p">
-                      In Meta for Developers → Your App → WhatsApp → Configuration, set:
+                      Sign up at aisensy.com → API Keys → copy your API key.
+                      WhatsApp number activation takes 2-4 hours.
                     </Text>
-                    <Text variant="bodySm" as="p">
-                      <strong>Callback URL:</strong> {webhookUrl}
-                    </Text>
-                    <Text variant="bodySm" as="p">
-                      <strong>Subscribe to:</strong> messages, message_deliveries, message_reads
-                    </Text>
+                    <FormLayout>
+                      <TextField
+                        label="AiSensy API Key"
+                        name="aiSensyApiKey"
+                        defaultValue={shop?.aiSensyApiKey ?? ""}
+                        placeholder="your-aisensy-api-key"
+                        type="password"
+                        autoComplete="off"
+                        helpText="From AiSensy Dashboard → Settings → API Keys"
+                      />
+                    </FormLayout>
                   </BlockStack>
 
-                  {/* Order Settings */}
                   <Divider />
+
+                  {/* WATI */}
+                  <BlockStack gap="300">
+                    <Text variant="headingSm" as="h3">Option 2: WATI</Text>
+                    <Text variant="bodySm" tone="subdued" as="p">
+                      Sign up at wati.io → Settings → API → copy API URL and token.
+                    </Text>
+                    <FormLayout>
+                      <TextField
+                        label="WATI API URL"
+                        name="watiPhoneNumber"
+                        defaultValue={shop?.watiPhoneNumber ?? ""}
+                        placeholder="https://live-server-12345.wati.io"
+                        autoComplete="off"
+                        helpText="Your WATI server URL (found in API docs)"
+                      />
+                      <TextField
+                        label="WATI API Token"
+                        name="watiApiToken"
+                        defaultValue={shop?.watiApiToken ?? ""}
+                        type="password"
+                        placeholder="eyJhbGciOi..."
+                        autoComplete="off"
+                      />
+                    </FormLayout>
+                  </BlockStack>
+
+                  <Divider />
+
+                  {/* Meta Cloud API */}
+                  <BlockStack gap="300">
+                    <InlineStack gap="200" align="start">
+                      <Text variant="headingSm" as="h3">Option 3: Meta WhatsApp Cloud API</Text>
+                      <Badge tone="warning">Requires business verification (1-7 days)</Badge>
+                    </InlineStack>
+                    <FormLayout>
+                      <TextField
+                        label="Phone Number ID"
+                        name="waPhoneNumberId"
+                        defaultValue={shop?.waPhoneNumberId ?? ""}
+                        placeholder="1234567890123"
+                        autoComplete="off"
+                      />
+                      <TextField
+                        label="Permanent Access Token"
+                        name="waAccessToken"
+                        type="password"
+                        defaultValue=""
+                        placeholder="EAAxxxxx..."
+                        autoComplete="off"
+                      />
+                      <TextField
+                        label="Business Account ID"
+                        name="waBusinessAccountId"
+                        defaultValue={shop?.waBusinessAccountId ?? ""}
+                        placeholder="1234567890123"
+                        autoComplete="off"
+                      />
+                      <TextField
+                        label="Webhook Verify Token"
+                        name="waVerifyToken"
+                        defaultValue={shop?.waVerifyToken ?? "pulseback_verify"}
+                        autoComplete="off"
+                        helpText={`Set this in Meta App → Webhooks → Callback URL: ${waWebhookUrl}`}
+                      />
+                    </FormLayout>
+                  </BlockStack>
+                </BlockStack>
+              </Card>
+
+              {/* Required WhatsApp Templates */}
+              <Card>
+                <BlockStack gap="300">
+                  <Text variant="headingMd" as="h2">Required Message Templates</Text>
+                  <Text variant="bodySm" tone="subdued" as="p">
+                    Create these templates in your WhatsApp provider dashboard before automations will work.
+                  </Text>
+                  {[
+                    { name: "order_confirmed",        params: "{{name}}, {{order_id}}, {{amount}}",                     use: "Sent on every prepaid order" },
+                    { name: "cod_confirmation",        params: "{{name}}, {{order_id}}, {{amount}}",                     use: "Sent on COD — customer replies YES/NO" },
+                    { name: "abandoned_cart_recovery", params: "{{name}}, {{cart_value}}, {{discount_code}}",            use: "Sent 30 min after cart abandonment" },
+                    { name: "order_dispatched",        params: "{{name}}, {{order_id}}, {{awb}}, {{carrier}}",           use: "Sent when shipment dispatched" },
+                  ].map(t => (
+                    <Box key={t.name} padding="300" background="bg-surface-secondary" borderRadius="200">
+                      <BlockStack gap="100">
+                        <Text variant="bodySm" fontWeight="bold" as="p">{t.name}</Text>
+                        <Text variant="bodySm" tone="subdued" as="p">Params: {t.params}</Text>
+                        <Text variant="bodySm" tone="subdued" as="p">Use: {t.use}</Text>
+                      </BlockStack>
+                    </Box>
+                  ))}
+                </BlockStack>
+              </Card>
+
+              {/* Abandoned Cart Cron */}
+              <Card>
+                <BlockStack gap="300">
+                  <Text variant="headingMd" as="h2">Abandoned Cart Cron</Text>
+                  <Text variant="bodySm" tone="subdued" as="p">
+                    Set up a cron job to call this URL every 5 minutes. Use cron-job.org (free).
+                  </Text>
+                  <Box padding="300" background="bg-surface-secondary" borderRadius="200">
+                    <BlockStack gap="100">
+                      <Text variant="bodySm" fontWeight="bold" as="p">POST {cronUrl}</Text>
+                      <Text variant="bodySm" tone="subdued" as="p">Header: X-Cron-Secret: [your CRON_SECRET]</Text>
+                    </BlockStack>
+                  </Box>
+                </BlockStack>
+              </Card>
+
+              {/* Order Rules */}
+              <Card>
+                <BlockStack gap="400">
                   <Text variant="headingMd" as="h2">Order Rules</Text>
                   <FormLayout>
                     <TextField
-                      label="RTO Risk Threshold (hide COD above this score)"
+                      label="RTO Score Threshold — hide COD above this score"
                       name="rtoThreshold"
                       type="number"
                       defaultValue={String(shop?.rtoThreshold ?? 60)}
-                      min="0"
-                      max="100"
                       suffix="/ 100"
                       helpText="Customers scoring above this will not see Cash on Delivery at checkout"
                       autoComplete="off"
                     />
                     <TextField
-                      label="Dispatch SLA (hours)"
+                      label="Dispatch SLA"
                       name="dispatchSlaHours"
                       type="number"
                       defaultValue={String(shop?.dispatchSlaHours ?? 24)}
                       suffix="hours"
-                      helpText="How many hours you have to dispatch an order before it's flagged as delayed"
+                      helpText="Hours you have to dispatch before the order is flagged as delayed"
                       autoComplete="off"
                     />
                   </FormLayout>
-
-                  {/* Abandoned Cart */}
-                  <Divider />
-                  <Text variant="headingMd" as="h2">Abandoned Cart Automation</Text>
-                  <Text variant="bodySm" tone="subdued" as="p">
-                    Automatically sends WhatsApp recovery messages 30 minutes after cart abandonment.
-                    Set up a cron job to call the endpoint below every 5 minutes.
-                  </Text>
-                  <Text variant="bodySm" as="p">
-                    <strong>Cron URL:</strong> {cronUrl}
-                  </Text>
-                  <Text variant="bodySm" as="p">
-                    <strong>Header:</strong> X-Cron-Secret: [your CRON_SECRET env var]
-                  </Text>
-                  <Text variant="bodySm" tone="subdued" as="p">
-                    Tip: Use cron-job.org (free) or Fly.io scheduled machines to call this URL.
-                  </Text>
-
-                  <Button submit loading={saving} variant="primary">Save Settings</Button>
                 </BlockStack>
-              </Form>
+              </Card>
+
+              <Button submit loading={saving} variant="primary" size="large">
+                Save Settings
+              </Button>
+
             </BlockStack>
-          </Card>
+          </Form>
         </Layout.Section>
       </Layout>
     </Page>

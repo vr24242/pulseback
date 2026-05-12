@@ -46,14 +46,16 @@ model Shop {
   isActive    Boolean  @default(true)
 
   // Integration credentials (encrypted at app layer)
-  // WhatsApp Cloud API (Meta)
+  // WhatsApp — AiSensy (recommended for India)
+  aiSensyApiKey       String?
+  // WhatsApp — WATI
+  watiApiToken        String?
+  watiPhoneNumber     String?  // stores WATI API URL for this field
+  // WhatsApp — Meta Cloud API
   waPhoneNumberId     String?
   waAccessToken       String?
   waBusinessAccountId String?
   waVerifyToken       String?
-  // Legacy WATI
-  watiApiToken      String?
-  watiPhoneNumber   String?
   // Email
   sendgridApiKey    String?
   sendgridFromEmail String?

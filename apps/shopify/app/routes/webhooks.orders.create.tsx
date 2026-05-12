@@ -11,7 +11,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const order = payload as ShopifyOrder
 
   try {
-    const shop = await db.shop.findUnique({ where: { domain: shopDomain } })
+    const shop = await db.shop.findUnique({
+      where: { domain: shopDomain },
+      select: {
+        id: true, dispatchSlaHours: true,
+        aiSensyApiKey: true, watiApiToken: true, watiPhoneNumber: true,
+        waPhoneNumberId: true, waAccessToken: true,
+      },
+    })
     if (!shop) return json({ ok: true })
 
     const phone = order.billing_address?.phone ?? order.shipping_address?.phone ?? order.phone
@@ -141,8 +148,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           name: customerName,
           orderName: order.name,
           amount,
-          shopWaPhoneNumberId: shop.waPhoneNumberId ?? undefined,
-          shopWaAccessToken: shop.waAccessToken ?? undefined,
+          shopConfig: {
+            aiSensyApiKey: shop.aiSensyApiKey,
+            watiApiToken: shop.watiApiToken,
+            watiApiUrl: shop.watiPhoneNumber,
+            waPhoneNumberId: shop.waPhoneNumberId,
+            waAccessToken: shop.waAccessToken,
+          },
         }).then(async (result) => {
           if (result.success) {
             await db.order.update({
@@ -173,8 +185,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           name: customerName,
           orderName: order.name,
           amount,
-          phoneNumberId: shop.waPhoneNumberId ?? undefined,
-          accessToken: shop.waAccessToken ?? undefined,
+          shopConfig: {
+            aiSensyApiKey: shop.aiSensyApiKey,
+            watiApiToken: shop.watiApiToken,
+            watiApiUrl: shop.watiPhoneNumber,
+            waPhoneNumberId: shop.waPhoneNumberId,
+            waAccessToken: shop.waAccessToken,
+          },
         }).then(async (result) => {
           if (result.success) {
             await db.communication.create({

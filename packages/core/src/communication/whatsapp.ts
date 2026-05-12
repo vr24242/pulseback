@@ -1,16 +1,5 @@
-// WhatsApp Cloud API (Meta) + WATI fallback
-
-interface CloudAPIMessage {
-  to: string          // full number with country code: 919876543210
-  templateName: string
-  languageCode?: string
-  components?: CloudAPIComponent[]
-}
-
-interface CloudAPIComponent {
-  type: "body" | "header" | "button"
-  parameters: Array<{ type: "text"; text: string }>
-}
+// WhatsApp messaging — supports AiSensy, WATI, and Meta Cloud API
+// For Indian D2C: AiSensy is recommended (live in 2-4 hrs, no Meta verification)
 
 interface WAResult {
   success: boolean
@@ -25,49 +14,101 @@ function normalizePhone(phone: string): string {
   return digits
 }
 
-// ─── Meta WhatsApp Cloud API ───────────────────────────────────────────────
+// ─── AiSensy ──────────────────────────────────────────────────────────────────
+// Sign up: https://aisensy.com — get API key + campaign name from dashboard
+// Docs: https://docs.aisensy.com/
 
-export async function sendWhatsAppTemplate(params: {
+async function sendViaAiSensy(params: {
   phone: string
   templateName: string
-  languageCode?: string
-  bodyParams?: string[]
-  headerParams?: string[]
-  phoneNumberId?: string
-  accessToken?: string
+  bodyParams: string[]
+  apiKey: string
 }): Promise<WAResult> {
-  const phoneNumberId = params.phoneNumberId ?? process.env.WA_PHONE_NUMBER_ID
-  const accessToken   = params.accessToken   ?? process.env.WA_ACCESS_TOKEN
-
-  if (!phoneNumberId || !accessToken) {
-    return { success: false, error: "WhatsApp credentials not configured" }
-  }
-
   const to = normalizePhone(params.phone)
-
-  const components: CloudAPIComponent[] = []
-
-  if (params.headerParams?.length) {
-    components.push({
-      type: "header",
-      parameters: params.headerParams.map(t => ({ type: "text", text: t })),
+  try {
+    const res = await fetch("https://backend.aisensy.com/campaign/t1/api/v2", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        apiKey: params.apiKey,
+        campaignName: params.templateName,
+        destination: to,
+        userName: "Pulseback",
+        templateParams: params.bodyParams,
+        source: "pulseback",
+        media: {},
+        buttons: [],
+        carouselCards: [],
+        location: {},
+      }),
     })
+    const data = await res.json() as { success?: boolean; messageId?: string; message?: string }
+    if (!res.ok) return { success: false, error: data.message ?? "AiSensy error" }
+    return { success: true, messageId: data.messageId }
+  } catch (err: unknown) {
+    return { success: false, error: (err as Error).message }
   }
+}
 
-  if (params.bodyParams?.length) {
-    components.push({
-      type: "body",
-      parameters: params.bodyParams.map(t => ({ type: "text", text: t })),
-    })
-  }
+// ─── WATI ─────────────────────────────────────────────────────────────────────
+// Sign up: https://wati.io — get API URL + token from account settings
 
+async function sendViaWATI(params: {
+  phone: string
+  templateName: string
+  bodyParams: string[]
+  apiUrl: string
+  token: string
+}): Promise<WAResult> {
+  const to = normalizePhone(params.phone)
   try {
     const res = await fetch(
-      `https://graph.facebook.com/v19.0/${phoneNumberId}/messages`,
+      `${params.apiUrl}/api/v1/sendTemplateMessage?whatsappNumber=${to}`,
       {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: `Bearer ${params.token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          template_name: params.templateName,
+          broadcast_name: params.templateName,
+          parameters: params.bodyParams.map(v => ({ name: "text", text: v })),
+        }),
+      }
+    )
+    const data = await res.json() as { id?: string; message?: string }
+    if (!res.ok) return { success: false, error: data.message ?? "WATI error" }
+    return { success: true, messageId: data.id }
+  } catch (err: unknown) {
+    return { success: false, error: (err as Error).message }
+  }
+}
+
+// ─── Meta Cloud API ──────────────────────────────────────────────────────────
+// Requires Meta Business Verification (takes 1-7 days)
+// Use AiSensy/WATI for faster setup
+
+async function sendViaMetaCloud(params: {
+  phone: string
+  templateName: string
+  bodyParams?: string[]
+  phoneNumberId: string
+  accessToken: string
+  languageCode?: string
+}): Promise<WAResult> {
+  const to = normalizePhone(params.phone)
+  try {
+    const components = params.bodyParams?.length
+      ? [{ type: "body", parameters: params.bodyParams.map(t => ({ type: "text", text: t })) }]
+      : []
+
+    const res = await fetch(
+      `https://graph.facebook.com/v19.0/${params.phoneNumberId}/messages`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${params.accessToken}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
@@ -82,33 +123,94 @@ export async function sendWhatsAppTemplate(params: {
         }),
       }
     )
-
     const data = await res.json() as { messages?: Array<{ id: string }>; error?: { message: string } }
-
-    if (!res.ok || data.error) {
-      return { success: false, error: data.error?.message ?? "Unknown error" }
-    }
-
+    if (!res.ok || data.error) return { success: false, error: data.error?.message ?? "Meta error" }
     return { success: true, messageId: data.messages?.[0]?.id }
   } catch (err: unknown) {
     return { success: false, error: (err as Error).message }
   }
 }
 
+// ─── Universal sender — picks provider based on shop config ─────────────────
+
+interface ShopWAConfig {
+  aiSensyApiKey?: string | null
+  watiApiToken?: string | null
+  watiApiUrl?: string | null       // e.g. https://live-server-12345.wati.io
+  waPhoneNumberId?: string | null  // Meta Cloud API
+  waAccessToken?: string | null    // Meta Cloud API
+}
+
+export async function sendWhatsAppTemplate(params: {
+  phone: string
+  templateName: string
+  bodyParams?: string[]
+  shopConfig?: ShopWAConfig
+}): Promise<WAResult> {
+  const cfg = params.shopConfig ?? {}
+
+  // Priority: AiSensy → WATI → Meta Cloud API → env fallback
+  if (cfg.aiSensyApiKey) {
+    return sendViaAiSensy({
+      phone: params.phone,
+      templateName: params.templateName,
+      bodyParams: params.bodyParams ?? [],
+      apiKey: cfg.aiSensyApiKey,
+    })
+  }
+
+  if (cfg.watiApiToken && cfg.watiApiUrl) {
+    return sendViaWATI({
+      phone: params.phone,
+      templateName: params.templateName,
+      bodyParams: params.bodyParams ?? [],
+      apiUrl: cfg.watiApiUrl,
+      token: cfg.watiApiToken,
+    })
+  }
+
+  const phoneNumberId = cfg.waPhoneNumberId ?? process.env.WA_PHONE_NUMBER_ID
+  const accessToken   = cfg.waAccessToken   ?? process.env.WA_ACCESS_TOKEN
+  if (phoneNumberId && accessToken) {
+    return sendViaMetaCloud({
+      phone: params.phone,
+      templateName: params.templateName,
+      bodyParams: params.bodyParams,
+      phoneNumberId,
+      accessToken,
+    })
+  }
+
+  // Env-level AiSensy fallback
+  const envAiSensy = process.env.AISENSY_API_KEY
+  if (envAiSensy) {
+    return sendViaAiSensy({
+      phone: params.phone,
+      templateName: params.templateName,
+      bodyParams: params.bodyParams ?? [],
+      apiKey: envAiSensy,
+    })
+  }
+
+  console.warn("[whatsapp] No provider configured for shop")
+  return { success: false, error: "No WhatsApp provider configured" }
+}
+
 export async function sendWhatsAppText(params: {
   phone: string
   body: string
-  phoneNumberId?: string
-  accessToken?: string
+  shopConfig?: ShopWAConfig
 }): Promise<WAResult> {
-  const phoneNumberId = params.phoneNumberId ?? process.env.WA_PHONE_NUMBER_ID
-  const accessToken   = params.accessToken   ?? process.env.WA_ACCESS_TOKEN
+  const cfg = params.shopConfig ?? {}
+  const to = normalizePhone(params.phone)
+
+  // Text messages only supported on Meta Cloud API
+  const phoneNumberId = cfg.waPhoneNumberId ?? process.env.WA_PHONE_NUMBER_ID
+  const accessToken   = cfg.waAccessToken   ?? process.env.WA_ACCESS_TOKEN
 
   if (!phoneNumberId || !accessToken) {
-    return { success: false, error: "WhatsApp credentials not configured" }
+    return { success: false, error: "Text messages require Meta Cloud API credentials" }
   }
-
-  const to = normalizePhone(params.phone)
 
   try {
     const res = await fetch(
@@ -127,35 +229,28 @@ export async function sendWhatsAppText(params: {
         }),
       }
     )
-
     const data = await res.json() as { messages?: Array<{ id: string }>; error?: { message: string } }
-
-    if (!res.ok || data.error) {
-      return { success: false, error: data.error?.message ?? "Unknown error" }
-    }
-
+    if (!res.ok || data.error) return { success: false, error: data.error?.message }
     return { success: true, messageId: data.messages?.[0]?.id }
   } catch (err: unknown) {
     return { success: false, error: (err as Error).message }
   }
 }
 
-// ─── Convenience functions for Pulseback flows ─────────────────────────────
+// ─── Convenience wrappers ────────────────────────────────────────────────────
 
 export async function sendCODConfirmation(params: {
   phone: string
   name: string
   orderName: string
   amount: string
-  shopWaPhoneNumberId?: string
-  shopWaAccessToken?: string
+  shopConfig?: ShopWAConfig
 }): Promise<WAResult> {
   return sendWhatsAppTemplate({
     phone: params.phone,
     templateName: "cod_confirmation",
     bodyParams: [params.name, params.orderName, params.amount],
-    phoneNumberId: params.shopWaPhoneNumberId,
-    accessToken: params.shopWaAccessToken,
+    shopConfig: params.shopConfig,
   })
 }
 
@@ -164,21 +259,13 @@ export async function sendAbandonedCartRecovery(params: {
   name: string
   cartValue: string
   discountCode?: string
-  checkoutUrl?: string
-  phoneNumberId?: string
-  accessToken?: string
+  shopConfig?: ShopWAConfig
 }): Promise<WAResult> {
   return sendWhatsAppTemplate({
     phone: params.phone,
     templateName: "abandoned_cart_recovery",
-    bodyParams: [
-      params.name,
-      params.cartValue,
-      params.discountCode ?? "SAVE10",
-      params.checkoutUrl ?? "",
-    ],
-    phoneNumberId: params.phoneNumberId,
-    accessToken: params.accessToken,
+    bodyParams: [params.name, params.cartValue, params.discountCode ?? "SAVE10"],
+    shopConfig: params.shopConfig,
   })
 }
 
@@ -187,15 +274,13 @@ export async function sendOrderConfirmation(params: {
   name: string
   orderName: string
   amount: string
-  phoneNumberId?: string
-  accessToken?: string
+  shopConfig?: ShopWAConfig
 }): Promise<WAResult> {
   return sendWhatsAppTemplate({
     phone: params.phone,
     templateName: "order_confirmed",
     bodyParams: [params.name, params.orderName, params.amount],
-    phoneNumberId: params.phoneNumberId,
-    accessToken: params.accessToken,
+    shopConfig: params.shopConfig,
   })
 }
 
@@ -205,14 +290,12 @@ export async function sendOrderDispatched(params: {
   orderName: string
   awb: string
   carrier: string
-  phoneNumberId?: string
-  accessToken?: string
+  shopConfig?: ShopWAConfig
 }): Promise<WAResult> {
   return sendWhatsAppTemplate({
     phone: params.phone,
     templateName: "order_dispatched",
     bodyParams: [params.name, params.orderName, params.awb, params.carrier],
-    phoneNumberId: params.phoneNumberId,
-    accessToken: params.accessToken,
+    shopConfig: params.shopConfig,
   })
 }
