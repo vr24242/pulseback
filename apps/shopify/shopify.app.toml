@@ -1,7 +1,7 @@
 name = "Pulseback"
 client_id = "0ff9e7f487dd70fd194d572484f7f0c8"
 application_url = "https://pulseback.fly.dev"
-embedded = true
+embedded = false
 
 [access_scopes]
 scopes = "read_customers,write_customers,read_orders,write_orders,read_products,write_products,read_checkouts"
