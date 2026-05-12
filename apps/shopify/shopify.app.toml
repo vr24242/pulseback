@@ -1,0 +1,20 @@
+name = "Pulseback"
+client_id = "0ff9e7f487dd70fd194d572484f7f0c8"
+application_url = "https://localhost:3000"
+embedded = true
+
+[access_scopes]
+scopes = "read_customers,write_customers,read_orders,write_orders,read_products,write_products,read_checkouts"
+
+[auth]
+redirect_urls = [
+  "https://localhost:3000/auth/callback",
+  "https://localhost:3000/auth/shopify/callback",
+  "https://localhost:3000/api/auth/callback"
+]
+
+[webhooks]
+api_version = "2024-10"
+
+[pos]
+embedded = false

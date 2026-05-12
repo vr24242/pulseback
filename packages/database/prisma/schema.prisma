@@ -1,0 +1,544 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─────────────────────────────────────────────────────────────
+// SHOP — Multi-tenant root. One record per installed Shopify store.
+// ─────────────────────────────────────────────────────────────
+model Shop {
+  id          String   @id @default(cuid())
+  domain      String   @unique  // mystore.myshopify.com
+  accessToken String
+  name        String?
+  email       String?
+  currency    String   @default("INR")
+  timezone    String   @default("Asia/Kolkata")
+  isActive    Boolean  @default(true)
+
+  // Integration credentials (encrypted at app layer)
+  watiApiToken      String?
+  watiPhoneNumber   String?
+  sendgridApiKey    String?
+  sendgridFromEmail String?
+  twilioAccountSid  String?
+  twilioAuthToken   String?
+  twilioPhone       String?
+  metaPixelId       String?
+  metaAccessToken   String?
+  shiprocketEmail   String?
+  shiprocketToken   String?
+
+  // Settings
+  codEnabled        Boolean @default(true)
+  rtoThreshold      Int     @default(60)  // hide COD above this score
+  dispatchSlaHours  Int     @default(24)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  customers        Customer[]
+  orders           Order[]
+  checkoutSessions CheckoutSession[]
+  automations      Automation[]
+  communications   Communication[]
+
+  @@map("shops")
+}
+
+// ─────────────────────────────────────────────────────────────
+// CUSTOMER — Identity OS core. The single record per customer.
+// ─────────────────────────────────────────────────────────────
+model Customer {
+  id    String @id @default(cuid())
+  shopId String
+  shop  Shop   @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  // Identity
+  phone             String?
+  email             String?
+  name              String?
+  shopifyCustomerId String?
+  identityConfidence Float  @default(0) // 0.0 - 1.0
+
+  // Location
+  city    String?
+  state   String?
+  pincode String?
+  country String  @default("IN")
+
+  // Acquisition (captured at first checkout)
+  acquisitionSource   String?
+  acquisitionCampaign String?
+  acquisitionMedium   String?
+  acquisitionContent  String?
+  referredBy          String?  // customerId of referrer
+  firstSeenAt         DateTime @default(now())
+  lastSeenAt          DateTime @default(now())
+
+  // ── Identity OS Scores ──
+  rtoRiskScore Int   @default(0)   // 0-100. >60 = hide COD
+  fraudScore   Int   @default(0)   // 0-100. >80 = flag for review
+  churnScore   Int   @default(0)   // 0-100. Updated by Retention OS
+  ltv          Float @default(0)   // lifetime value in store currency
+  ltvTier      String @default("new")
+  // new | growing | loyal | vip | lapsed
+
+  // ── Order Stats (denormalized for fast querying) ──
+  totalOrders       Int      @default(0)
+  totalSpend        Float    @default(0)
+  averageOrderValue Float    @default(0)
+  lastOrderAt       DateTime?
+  expectedNextOrderAt DateTime? // computed by Retention OS
+
+  // ── Return Stats ──
+  totalReturns Int   @default(0)
+  returnRate   Float @default(0) // 0.0 - 1.0
+
+  // ── Communication Consent ──
+  whatsappOptIn Boolean @default(false)
+  emailOptIn    Boolean @default(false)
+  smsOptIn      Boolean @default(false)
+  optInCapturedAt DateTime?
+
+  // ── Engagement Signals ──
+  emailOpenRate         Float @default(0)
+  whatsappResponseRate  Float @default(0)
+  lastEngagedAt         DateTime?
+  engagementScore       Int   @default(0) // 0-100
+
+  // ── Lifecycle ──
+  lifecycleStage String @default("prospect")
+  // prospect | first_buyer | repeat | loyal | vip | at_risk | lapsed
+
+  // ── Next Scheduled Action (Retention OS) ──
+  nextActionType    String?
+  nextActionAt      DateTime?
+
+  // ── Support History (denormalized) ──
+  totalTickets   Int @default(0)
+  openTickets    Int @default(0)
+  avgCsatScore   Float?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orders           Order[]
+  checkoutSessions CheckoutSession[]
+  communications   Communication[]
+  supportTickets   SupportTicket[]
+  retentionActions RetentionAction[]
+  timeline         TimelineEvent[]
+
+  @@unique([shopId, phone])
+  @@unique([shopId, email])
+  @@unique([shopId, shopifyCustomerId])
+  @@index([shopId, ltvTier])
+  @@index([shopId, lifecycleStage])
+  @@index([shopId, churnScore])
+  @@index([shopId, nextActionAt])
+  @@index([shopId, lastOrderAt])
+  @@map("customers")
+}
+
+// ─────────────────────────────────────────────────────────────
+// CHECKOUT SESSION — Checkout OS. Every session from first touch.
+// ─────────────────────────────────────────────────────────────
+model CheckoutSession {
+  id       String  @id @default(cuid())
+  shopId   String
+  shop     Shop    @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  customerId String?
+  customer Customer? @relation(fields: [customerId], references: [id])
+
+  // Shopify checkout token (links to their checkout)
+  shopifyCheckoutToken String  @unique
+  cartValue            Float
+  cartItems            Json    // OrderItem[]
+
+  // Identity captured during session
+  phone   String?
+  email   String?
+  pincode String?
+
+  // ── Checkout OS Intelligence ──
+  rtoRiskAtCheckout Int?
+  codShown          Boolean @default(false)
+  discountOffered   String?
+  discountApplied   Boolean @default(false)
+  upsellProductId   String?  // product shown as upsell
+  upsellConverted   Boolean @default(false)
+
+  // Attribution
+  utmSource   String?
+  utmMedium   String?
+  utmCampaign String?
+  utmContent  String?
+  deviceType  String?   // mobile | desktop | tablet
+  browserLang String?
+
+  // Status
+  status       String   @default("active")
+  // active | completed | abandoned | recovered
+  abandonedAt  DateTime?
+  recoveredAt  DateTime?
+  completedAt  DateTime?
+
+  // Recovery tracking
+  recoverySentAt   DateTime?
+  recoveryAttempts Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([shopId, status])
+  @@index([shopId, abandonedAt])
+  @@index([phone])
+  @@index([email])
+  @@map("checkout_sessions")
+}
+
+// ─────────────────────────────────────────────────────────────
+// ORDER — Order OS. Full order lifecycle.
+// ─────────────────────────────────────────────────────────────
+model Order {
+  id         String  @id @default(cuid())
+  shopId     String
+  shop       Shop    @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  customerId String?
+  customer   Customer? @relation(fields: [customerId], references: [id])
+
+  // Shopify identifiers
+  shopifyOrderId   String
+  shopifyOrderName String  // #1001
+
+  // Order details
+  totalPrice    Float
+  subtotalPrice Float
+  totalTax      Float  @default(0)
+  totalDiscount Float  @default(0)
+  currency      String @default("INR")
+  paymentMethod String // cod | prepaid
+  paymentStatus String @default("pending")
+  // pending | paid | failed | refunded | partially_refunded
+  items         Json   // OrderItem[]
+
+  // Shipping
+  shippingAddress Json?
+  pincode         String?
+
+  // Status (Order OS lifecycle)
+  status      String @default("placed")
+  // placed | confirmed | packed | dispatched | delivered | cancelled | returned
+
+  // SLA tracking
+  dispatchSlaAt  DateTime?  // must dispatch by
+  dispatchedAt   DateTime?
+  deliveredAt    DateTime?
+  cancelledAt    DateTime?
+  returnedAt     DateTime?
+
+  // ── RTO Intelligence ──
+  rtoRisk    Int     @default(0)
+  isRTO      Boolean @default(false)
+  rtoReason  String?
+  rtoCost    Float?
+
+  // ── Cancel Prevention ──
+  cancelReason      String?
+  cancelSaveAttempt Boolean @default(false)
+  cancelSaved       Boolean @default(false)  // did we prevent the cancel?
+
+  // ── COD Confirmation ──
+  codConfirmationSent      Boolean @default(false)
+  codConfirmationConfirmed Boolean @default(false)
+
+  // ── Post-purchase Upsell ──
+  upsellProductId String?
+  upsellConverted Boolean @default(false)
+  upsellRevenue   Float?
+
+  // Source
+  sourceCheckoutToken String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  shipments Shipment[]
+
+  @@unique([shopId, shopifyOrderId])
+  @@index([shopId, status])
+  @@index([shopId, paymentMethod])
+  @@index([customerId])
+  @@index([shopId, createdAt])
+  @@map("orders")
+}
+
+// ─────────────────────────────────────────────────────────────
+// SHIPMENT — Shipping OS. Per-order tracking.
+// ─────────────────────────────────────────────────────────────
+model Shipment {
+  id      String @id @default(cuid())
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  awb     String @unique // air waybill / tracking number
+  carrier String // shiprocket | delhivery | bluedart | xpressbees | ecom | dtdc
+
+  // Normalized status
+  status    String @default("created")
+  // created | in_transit | out_for_delivery | delivered
+  // failed_delivery | rto_initiated | rto_delivered | exception
+  rawStatus String? // carrier's original status string
+
+  // Timestamps
+  lastScannedAt     DateTime?
+  estimatedDelivery DateTime?
+  deliveredAt       DateTime?
+
+  // Exception detection
+  isStuck        Boolean  @default(false)
+  stuckSince     DateTime?
+  failedAttempts Int      @default(0)
+  lastFailedAt   DateTime?
+
+  // RTO
+  rtoInitiatedAt  DateTime?
+  rtoDeliveredAt  DateTime?
+
+  // Proactive comms sent
+  dispatchNotifSent    Boolean @default(false)
+  outForDeliveryNotif  Boolean @default(false)
+  stuckNotifSent       Boolean @default(false)
+  failedDeliveryNotif  Boolean @default(false)
+  rtoInterventionSent  Boolean @default(false)
+
+  // Tracking history
+  trackingEvents Json @default("[]") // TrackingEvent[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([carrier])
+  @@index([isStuck])
+  @@map("shipments")
+}
+
+// ─────────────────────────────────────────────────────────────
+// COMMUNICATION — Communication OS. Every message ever sent.
+// ─────────────────────────────────────────────────────────────
+model Communication {
+  id         String   @id @default(cuid())
+  shopId     String
+  shop       Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id])
+
+  // Message details
+  channel   String // whatsapp | email | sms
+  direction String // outbound | inbound
+  messageId String? // external ID (WATI, SendGrid, Twilio)
+
+  // Content
+  templateName String?
+  subject      String?  // email only
+  body         String
+
+  // What triggered this message
+  triggerType String
+  triggerRef  String?  // orderId, checkoutId, shipmentId, etc.
+
+  // Delivery status
+  status String @default("queued")
+  // queued | sent | delivered | opened | clicked | replied | failed | bounced
+
+  // Timestamps
+  queuedAt    DateTime @default(now())
+  sentAt      DateTime?
+  deliveredAt DateTime?
+  openedAt    DateTime?
+  clickedAt   DateTime?
+  repliedAt   DateTime?
+  failedAt    DateTime?
+
+  // Reply handling
+  replyBody     String?
+  replyHandled  Boolean @default(false)
+  routedToAgent Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@index([shopId, customerId])
+  @@index([shopId, triggerType])
+  @@index([shopId, status])
+  @@index([shopId, channel])
+  @@map("communications")
+}
+
+// ─────────────────────────────────────────────────────────────
+// SUPPORT TICKET — Support OS.
+// ─────────────────────────────────────────────────────────────
+model SupportTicket {
+  id         String   @id @default(cuid())
+  shopId     String
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id])
+
+  // Ticket meta
+  channel  String  // whatsapp | email | widget | instagram
+  intent   String  // wismo | cancel | return | wrong_item | payment | product_q | exchange | other
+  priority String  @default("normal") // low | normal | high | urgent
+
+  // Is this VIP customer?
+  isVip Boolean @default(false)
+
+  // Conversation (append-only log)
+  conversation Json @default("[]")
+  // [{ role: "customer"|"claude"|"agent", content, timestamp, confidence? }]
+
+  // Resolution
+  status     String @default("open")
+  // open | in_progress | resolved | escalated | closed
+  resolvedBy String? // claude | human_agent
+  resolution String?
+
+  // Escalation
+  escalatedAt     DateTime?
+  escalationReason String?
+  assignedAgentId  String?
+
+  // CSAT
+  csatScore    Int?    // 1-5
+  csatFeedback String?
+  csatAskedAt  DateTime?
+
+  // Timing
+  firstResponseAt DateTime?
+  resolvedAt      DateTime?
+  closedAt        DateTime?
+
+  openedAt  DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([shopId, status])
+  @@index([customerId])
+  @@index([shopId, intent])
+  @@index([shopId, priority])
+  @@map("support_tickets")
+}
+
+// ─────────────────────────────────────────────────────────────
+// RETENTION ACTION — Retention OS. Scheduled actions per customer.
+// ─────────────────────────────────────────────────────────────
+model RetentionAction {
+  id         String   @id @default(cuid())
+  shopId     String
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id])
+
+  actionType String
+  // repurchase_nudge | churn_intervention | win_back
+  // vip_reward | referral_ask | review_request | upsell
+
+  scheduledFor DateTime
+  executedAt   DateTime?
+
+  status String @default("scheduled")
+  // scheduled | executing | executed | skipped | cancelled | failed
+
+  // Outcome
+  converted       Boolean @default(false)
+  conversionValue Float?
+  communicationId String? // which message was sent
+
+  metadata Json @default("{}")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([shopId, status, scheduledFor])
+  @@index([customerId])
+  @@map("retention_actions")
+}
+
+// ─────────────────────────────────────────────────────────────
+// TIMELINE EVENT — Per customer, full history for merchant view.
+// ─────────────────────────────────────────────────────────────
+model TimelineEvent {
+  id         String   @id @default(cuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id])
+  shopId     String
+
+  eventType   String  // maps to EventType enum in shared
+  title       String  // "Order #1042 placed — ₹1,200"
+  description String?
+  metadata    Json    @default("{}")
+
+  occurredAt DateTime @default(now())
+
+  @@index([customerId, occurredAt])
+  @@index([shopId, occurredAt])
+  @@map("timeline_events")
+}
+
+// ─────────────────────────────────────────────────────────────
+// AUTOMATION — Merchant-configured flows.
+// ─────────────────────────────────────────────────────────────
+model Automation {
+  id     String @id @default(cuid())
+  shopId String
+  shop   Shop   @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  name     String
+  trigger  String   // checkout.abandoned | order.placed | shipment.delivered | etc.
+  isActive Boolean  @default(true)
+
+  // Flow definition
+  steps Json
+  // [{ delay: 900, channel: "whatsapp", templateName: "...", condition?: {...} }]
+
+  // Stats
+  totalTriggered Int @default(0)
+  totalExecuted  Int @default(0)
+  totalConverted Int @default(0)
+  revenue        Float @default(0)  // revenue attributed
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([shopId, trigger])
+  @@index([shopId, isActive])
+  @@map("automations")
+}
+
+// ─────────────────────────────────────────────────────────────
+// MARKETING EVENT — Marketing OS. Server-side events log.
+// ─────────────────────────────────────────────────────────────
+model MarketingEvent {
+  id         String  @id @default(cuid())
+  shopId     String
+  customerId String?
+
+  platform  String  // meta | google
+  eventName String  // Purchase | AddToCart | InitiateCheckout | custom
+  eventValue Float?
+
+  // Deduplication
+  eventId   String  // sent to Meta/Google for dedup
+  firedAt   DateTime @default(now())
+  success   Boolean  @default(true)
+  error     String?
+
+  metadata Json @default("{}")
+
+  @@index([shopId, eventName])
+  @@index([shopId, firedAt])
+  @@map("marketing_events")
+}
