@@ -4,10 +4,17 @@ import { login } from "../shopify.server"
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const url = new URL(request.url)
+  const shop = url.searchParams.get("shop")
+  const hmac = url.searchParams.get("hmac")
 
-  if (url.searchParams.get("shop")) {
-    // login() returns a Response (redirect to Shopify OAuth)
+  // Fresh install — no hmac yet, start OAuth
+  if (shop && !hmac) {
     return login(request)
+  }
+
+  // Post-OAuth redirect from Shopify (has hmac+session) — go to app
+  if (shop && hmac) {
+    return redirect(`/app?${url.searchParams.toString()}`)
   }
 
   return redirect("/app")
