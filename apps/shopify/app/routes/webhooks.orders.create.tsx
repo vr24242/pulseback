@@ -2,6 +2,7 @@ import type { ActionFunctionArgs } from "@remix-run/node"
 import { json } from "@remix-run/node"
 import { authenticate } from "../shopify.server"
 import { db } from "@d2c/database"
+import { sendCODConfirmation, sendOrderConfirmation } from "@d2c/core"
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const { topic, shop: shopDomain, payload } = await authenticate.webhook(request)
@@ -44,10 +45,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       })
     }
 
-    const paymentMethod =
+    const isCOD =
       order.payment_gateway?.toLowerCase().includes("cod") ||
       order.payment_gateway?.toLowerCase().includes("cash")
-        ? "cod" : "prepaid"
+    const paymentMethod = isCOD ? "cod" : "prepaid"
 
     // ── Upsert order ──
     const newOrder = await db.order.upsert({
@@ -72,6 +73,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       },
       update: {},
     })
+
+    // ── Mark checkout session as completed ──
+    if (order.checkout_token) {
+      await db.checkoutSession.updateMany({
+        where: { shopifyCheckoutToken: order.checkout_token, shopId: shop.id },
+        data: { status: "completed", completedAt: new Date() },
+      })
+    }
 
     // ── Update customer stats ──
     const stats = await db.order.aggregate({
@@ -120,6 +129,74 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       },
     })
 
+    // ── WhatsApp notifications (fire-and-forget) ──
+    if (normalizedPhone) {
+      const customerName = customer.name?.split(" ")[0] ?? "there"
+      const amount = `₹${parseFloat(order.total_price).toLocaleString("en-IN")}`
+
+      if (isCOD) {
+        // COD confirmation — ask customer to confirm before dispatch
+        sendCODConfirmation({
+          phone: normalizedPhone,
+          name: customerName,
+          orderName: order.name,
+          amount,
+          shopWaPhoneNumberId: shop.waPhoneNumberId ?? undefined,
+          shopWaAccessToken: shop.waAccessToken ?? undefined,
+        }).then(async (result) => {
+          if (result.success) {
+            await db.order.update({
+              where: { id: newOrder.id },
+              data: { codConfirmationSent: true },
+            })
+            await db.communication.create({
+              data: {
+                shopId: shop.id,
+                customerId: customer!.id,
+                channel: "whatsapp",
+                direction: "outbound",
+                messageId: result.messageId,
+                templateName: "cod_confirmation",
+                body: `COD confirmation sent for ${order.name}`,
+                triggerType: "order.placed.cod",
+                triggerRef: newOrder.id,
+                status: "sent",
+                sentAt: new Date(),
+              },
+            })
+          }
+        }).catch(console.error)
+      } else {
+        // Prepaid — send order confirmation
+        sendOrderConfirmation({
+          phone: normalizedPhone,
+          name: customerName,
+          orderName: order.name,
+          amount,
+          phoneNumberId: shop.waPhoneNumberId ?? undefined,
+          accessToken: shop.waAccessToken ?? undefined,
+        }).then(async (result) => {
+          if (result.success) {
+            await db.communication.create({
+              data: {
+                shopId: shop.id,
+                customerId: customer!.id,
+                channel: "whatsapp",
+                direction: "outbound",
+                messageId: result.messageId,
+                templateName: "order_confirmed",
+                body: `Order confirmation sent for ${order.name}`,
+                triggerType: "order.placed.prepaid",
+                triggerRef: newOrder.id,
+                status: "sent",
+                sentAt: new Date(),
+              },
+            })
+          }
+        }).catch(console.error)
+      }
+    }
+
     return json({ ok: true })
   } catch (err) {
     console.error("[webhooks/orders/create]", err)
@@ -132,6 +209,7 @@ interface ShopifyOrder {
   name: string
   email: string
   phone?: string
+  checkout_token?: string
   total_price: string
   subtotal_price?: string
   total_discounts?: string

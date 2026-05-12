@@ -36,13 +36,13 @@ const shopify = shopifyApp({
     },
   },
   webhooks: {
-    ORDERS_CREATE: { deliveryMethod: "http", callbackUrl: "/webhooks/orders/create" },
-    ORDERS_UPDATED: { deliveryMethod: "http", callbackUrl: "/webhooks/orders/updated" },
+    ORDERS_CREATE:    { deliveryMethod: "http", callbackUrl: "/webhooks/orders/create" },
+    ORDERS_UPDATED:   { deliveryMethod: "http", callbackUrl: "/webhooks/orders/updated" },
     CUSTOMERS_CREATE: { deliveryMethod: "http", callbackUrl: "/webhooks/customers/create" },
     CUSTOMERS_UPDATE: { deliveryMethod: "http", callbackUrl: "/webhooks/customers/update" },
     CHECKOUTS_CREATE: { deliveryMethod: "http", callbackUrl: "/webhooks/checkouts/create" },
     CHECKOUTS_UPDATE: { deliveryMethod: "http", callbackUrl: "/webhooks/checkouts/update" },
-    APP_UNINSTALLED: { deliveryMethod: "http", callbackUrl: "/webhooks/app/uninstalled" },
+    APP_UNINSTALLED:  { deliveryMethod: "http", callbackUrl: "/webhooks/app/uninstalled" },
   },
 })
 

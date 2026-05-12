@@ -23,6 +23,7 @@ export default function App() {
         <Link to="/app" rel="home">Home</Link>
         <Link to="/app/customers">Customers</Link>
         <Link to="/app/chat">AI Chat</Link>
+        <Link to="/app/settings">Settings</Link>
       </NavMenu>
       <Outlet />
     </AppProvider>

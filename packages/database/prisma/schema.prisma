@@ -46,15 +46,25 @@ model Shop {
   isActive    Boolean  @default(true)
 
   // Integration credentials (encrypted at app layer)
+  // WhatsApp Cloud API (Meta)
+  waPhoneNumberId     String?
+  waAccessToken       String?
+  waBusinessAccountId String?
+  waVerifyToken       String?
+  // Legacy WATI
   watiApiToken      String?
   watiPhoneNumber   String?
+  // Email
   sendgridApiKey    String?
   sendgridFromEmail String?
+  // Twilio SMS
   twilioAccountSid  String?
   twilioAuthToken   String?
   twilioPhone       String?
+  // Meta / Google
   metaPixelId       String?
   metaAccessToken   String?
+  // Shiprocket
   shiprocketEmail   String?
   shiprocketToken   String?
 
