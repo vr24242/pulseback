@@ -1,0 +1,12 @@
+node_modules
+.turbo
+.next
+build
+dist
+.env
+.env.local
+*.log
+.DS_Store
+.git
+apps/shopify/build
+apps/marketing/.next
