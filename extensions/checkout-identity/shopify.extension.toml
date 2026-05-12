@@ -1,0 +1,16 @@
+api_version = "2024-10"
+
+[[extensions]]
+type = "ui_extension"
+name = "Checkout Identity Capture"
+handle = "checkout-identity"
+
+[[extensions.targeting]]
+module = "./src/index.tsx"
+target = "purchase.contact-information.render-after"
+
+[extensions.settings]
+  [[extensions.settings.fields]]
+  key = "app_url"
+  type = "single_line_text_field"
+  name = "App URL"

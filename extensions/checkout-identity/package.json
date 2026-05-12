@@ -1,0 +1,12 @@
+{
+  "name": "@d2c/checkout-identity",
+  "version": "0.0.1",
+  "private": true,
+  "dependencies": {
+    "@shopify/ui-extensions": "^1.0.0",
+    "@shopify/ui-extensions-react": "^1.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0"
+  }
+}

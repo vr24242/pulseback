@@ -1,79 +1,75 @@
 import type { ActionFunctionArgs } from "@remix-run/node"
+import { json } from "@remix-run/node"
 import { authenticate } from "../shopify.server"
 import { db } from "@d2c/database"
-import { resolveIdentity } from "@d2c/core"
-import { publishEvent } from "@d2c/core"
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const { topic, shop, payload } = await authenticate.webhook(request)
-  if (topic !== "CHECKOUTS_CREATE") return new Response("Unhandled", { status: 404 })
+  const { topic, shop: shopDomain, payload } = await authenticate.webhook(request)
+  if (topic !== "CHECKOUTS_CREATE") return json({ ok: true })
 
-  const shopRecord = await db.shop.findUnique({ where: { domain: shop } })
-  if (!shopRecord) return new Response("Shop not found", { status: 404 })
+  const checkout = payload as ShopifyCheckout
 
-  const checkout = payload as {
-    token: string
-    email?: string
-    phone?: string
-    total_price: string
-    line_items: Array<{ product_id: number; quantity: number; price: string }>
-    shipping_address?: { zip?: string }
-    source_name?: string
-  }
+  try {
+    const shop = await db.shop.findUnique({ where: { domain: shopDomain } })
+    if (!shop) return json({ ok: true })
 
-  // Capture identity if phone/email available
-  let customer = null
-  if (checkout.phone || checkout.email) {
-    const result = await resolveIdentity({
-      phone: checkout.phone,
-      email: checkout.email,
-      shopId: shopRecord.id,
-      pincode: checkout.shipping_address?.zip,
+    const phone = checkout.phone
+    const email = checkout.email
+    const pincode = checkout.shipping_address?.zip
+    const normalizedPhone = phone ? phone.replace(/\D/g, "").slice(-10) : null
+
+    // Resolve customer if we have contact info
+    let customer = null
+    if (normalizedPhone) {
+      customer = await db.customer.findUnique({
+        where: { shopId_phone: { shopId: shop.id, phone: normalizedPhone } },
+      })
+    }
+    if (!customer && email) {
+      customer = await db.customer.findUnique({
+        where: { shopId_email: { shopId: shop.id, email: email.toLowerCase() } },
+      })
+    }
+
+    const cartValue = parseFloat(checkout.total_price ?? "0")
+
+    // Upsert checkout session
+    await db.checkoutSession.upsert({
+      where: { shopifyCheckoutToken: checkout.token },
+      create: {
+        shopId: shop.id,
+        customerId: customer?.id ?? null,
+        shopifyCheckoutToken: checkout.token,
+        cartValue,
+        cartItems: checkout.line_items ?? [],
+        phone: normalizedPhone,
+        email: email?.toLowerCase() ?? null,
+        pincode: pincode ?? null,
+        rtoRiskAtCheckout: customer?.rtoRiskScore ?? 30,
+        codShown: (customer?.rtoRiskScore ?? 30) < shop.rtoThreshold,
+        utmSource: checkout.source_name ?? null,
+        status: "active",
+      },
+      update: {
+        customerId: customer?.id ?? undefined,
+        phone: normalizedPhone ?? undefined,
+        email: email?.toLowerCase() ?? undefined,
+      },
     })
-    customer = result.customer
+
+    return json({ ok: true })
+  } catch (err) {
+    console.error("[webhooks/checkouts/create]", err)
+    return json({ ok: true })
   }
+}
 
-  // Create checkout session record
-  await db.checkoutSession.upsert({
-    where: { shopifyCheckoutToken: checkout.token },
-    create: {
-      shopId: shopRecord.id,
-      customerId: customer?.id,
-      shopifyCheckoutToken: checkout.token,
-      cartValue: parseFloat(checkout.total_price),
-      cartItems: checkout.line_items.map((li) => ({
-        productId: String(li.product_id),
-        quantity: li.quantity,
-        price: parseFloat(li.price),
-      })),
-      phone: checkout.phone,
-      email: checkout.email,
-      pincode: checkout.shipping_address?.zip,
-      status: "active",
-    },
-    update: {
-      phone: checkout.phone,
-      email: checkout.email,
-      customerId: customer?.id,
-      cartValue: parseFloat(checkout.total_price),
-    },
-  })
-
-  await publishEvent({
-    eventType: "checkout.started",
-    shopId: shopRecord.id,
-    customerId: customer?.id,
-    timestamp: new Date(),
-    metadata: {
-      sessionToken: checkout.token,
-      cartValue: parseFloat(checkout.total_price),
-      cartItems: checkout.line_items.map((li) => ({
-        productId: String(li.product_id),
-        quantity: li.quantity,
-        price: parseFloat(li.price),
-      })),
-    },
-  })
-
-  return new Response("OK", { status: 200 })
+interface ShopifyCheckout {
+  token: string
+  email?: string
+  phone?: string
+  total_price?: string
+  source_name?: string
+  shipping_address?: { zip?: string }
+  line_items: unknown[]
 }
