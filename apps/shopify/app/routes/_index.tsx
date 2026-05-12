@@ -6,8 +6,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const url = new URL(request.url)
 
   if (url.searchParams.get("shop")) {
-    // Kick off OAuth install flow
-    throw redirect(await login(request))
+    // login() returns a Response (redirect to Shopify OAuth)
+    return login(request)
   }
 
   return redirect("/app")
