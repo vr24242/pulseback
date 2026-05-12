@@ -1,6 +1,6 @@
 name = "Pulseback"
 client_id = "0ff9e7f487dd70fd194d572484f7f0c8"
-application_url = "https://localhost:3000"
+application_url = "https://pulseback.fly.dev"
 embedded = true
 
 [access_scopes]
@@ -8,9 +8,9 @@ scopes = "read_customers,write_customers,read_orders,write_orders,read_products,
 
 [auth]
 redirect_urls = [
-  "https://localhost:3000/auth/callback",
-  "https://localhost:3000/auth/shopify/callback",
-  "https://localhost:3000/api/auth/callback"
+  "https://pulseback.fly.dev/auth/callback",
+  "https://pulseback.fly.dev/auth/shopify/callback",
+  "https://pulseback.fly.dev/api/auth/callback"
 ]
 
 [webhooks]
