@@ -4,6 +4,8 @@ import { createRedisConnection } from "../redis"
 import { queueCommunication } from "../queues"
 import type { RetentionJobData } from "../queues"
 import { getCustomerMemory, decideRetention, CalendarAgent } from "../../agents"
+import { AgentOrchestrator, type AgentProposal, AgentDomain, DecisionAction } from "../../orchestrator"
+import { recordOutcome } from "../../learning/feedback-loop"
 
 const BATCH_SIZE = 100
 
@@ -214,13 +216,42 @@ async function processShop(shopId: string, job: Job<RetentionJobData>) {
         avgOrderValue: memory.avgOrderValue,
       })
 
-      // Check calendar before sending
-      const canSend = await calendar.canSend(u.id, "marketing", 20)
-      if (!canSend.allowed && decision.action === "send") {
+      // ────────────────────────────────────────────────────────────────────────────
+      // ORCHESTRATOR INTEGRATION (Phase 5)
+      // ────────────────────────────────────────────────────────────────────────────
+
+      // Create proposal for orchestrator coordination
+      const proposal: AgentProposal = {
+        agentDomain: AgentDomain.Marketing,
+        agentName: "retention",
+        customerId: u.id,
+        action: DecisionAction.SendMessage,
+        reasoning: `Lifecycle stage: ${u.lifecycleStage}. Churn score: ${u.churnScore}. Stage transition: ${u.prevStage} → ${u.lifecycleStage}. Intent: ${decision.offerType}`,
+        context: {
+          customerId: u.id,
+          lifecycleStage: u.lifecycleStage,
+          prevStage: u.prevStage,
+          churnScore: u.churnScore,
+          ltvTier: memory.ltvTier,
+          offerType: decision.offerType,
+        },
+        confidence: 70,
+        priority: u.lifecycleStage === "at_risk" ? "high" : "medium",
+        retryable: true,
+        idempotencyKey: `retention-${u.id}-${u.lifecycleStage}-${Date.now()}`,
+      }
+
+      // Get orchestrator approval
+      const orchestratorDecision = await AgentOrchestrator.propose(proposal, memory)
+
+      if (!orchestratorDecision.approved) {
         continue
       }
 
       if (decision.action === "send") {
+        // Execute orchestrator decision
+        const outcome = await AgentOrchestrator.execute(proposal, orchestratorDecision)
+
         // Stage transition determines trigger type
         const triggerType = shouldTriggerComm({
           from: u.prevStage,
@@ -235,6 +266,15 @@ async function processShop(shopId: string, job: Job<RetentionJobData>) {
           triggerType: triggerType || `retention_${u.lifecycleStage}`,
           triggerRef: u.id,
           priority: u.lifecycleStage === "at_risk" ? "high" : "medium",
+        })
+
+        // Record outcome for learning loop
+        await recordOutcome(outcome.proposalId, "success", {
+          customerId: u.id,
+          lifecycleStage: u.lifecycleStage,
+          churnScore: u.churnScore,
+          sentAt: new Date(),
+          channel: "whatsapp",
         })
 
         await calendar.recordSent(u.id, "marketing")

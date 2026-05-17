@@ -3,6 +3,9 @@ import { db } from "@d2c/database"
 import { createRedisConnection } from "../redis"
 import { queueCommunication } from "../queues"
 import type { WinbackJobData } from "../queues"
+import { getCustomerMemory } from "../../agents"
+import { AgentOrchestrator, type AgentProposal, AgentDomain, DecisionAction } from "../../orchestrator"
+import { recordOutcome } from "../../learning/feedback-loop"
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -181,6 +184,44 @@ async function processShop(shopId: string): Promise<{ sent: number; skipped: num
     }
 
     try {
+      // ────────────────────────────────────────────────────────────────────────────
+      // ORCHESTRATOR INTEGRATION (Phase 5)
+      // ────────────────────────────────────────────────────────────────────────────
+
+      // Load customer memory for orchestrator decision
+      const memory = await getCustomerMemory(customer.id)
+
+      // Create proposal for orchestrator coordination
+      const proposal: AgentProposal = {
+        agentDomain: AgentDomain.Marketing,
+        agentName: "winback",
+        customerId: customer.id,
+        action: DecisionAction.SendMessage,
+        reasoning: `Winback ${triggerType}. Days since last order: ${daysSince}. AVG order value: ₹${customer.averageOrderValue ?? 500}.`,
+        context: {
+          customerId: customer.id,
+          daysSinceLastOrder: daysSince,
+          tier: triggerType.includes("tier_a") ? "a" : "b",
+          avgOrderValue: customer.averageOrderValue ?? 500,
+          lifecycleStage: customer.lifecycleStage,
+        },
+        confidence: 65, // winback is lower confidence than other campaigns
+        priority: "low", // marketing has lowest priority
+        retryable: true,
+        idempotencyKey: `winback-${customer.id}-${triggerType}-${Math.floor(Date.now() / 86_400_000)}`,
+      }
+
+      // Get orchestrator approval
+      const orchestratorDecision = await AgentOrchestrator.propose(proposal, memory)
+
+      if (!orchestratorDecision.approved) {
+        skipped++
+        continue
+      }
+
+      // Execute orchestrator decision
+      const outcome = await AgentOrchestrator.execute(proposal, orchestratorDecision)
+
       await queueCommunication({
         shopId,
         customerId: customer.id,
@@ -190,6 +231,15 @@ async function processShop(shopId: string): Promise<{ sent: number; skipped: num
         triggerType,
         triggerRef: customer.id,
         priority: "low",
+      })
+
+      // Record outcome for learning loop
+      await recordOutcome(outcome.proposalId, "success", {
+        customerId: customer.id,
+        tier: triggerType.includes("tier_a") ? "a" : "b",
+        daysSinceLastOrder: daysSince,
+        sentAt: new Date(),
+        channel: "whatsapp",
       })
 
       // Push nextActionAt 30 days out to avoid re-sending too soon

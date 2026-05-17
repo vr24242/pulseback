@@ -1031,29 +1031,29 @@ async function handleEvent(customerId) {
 
 ## Next Steps (Immediate Work)
 
-### PRIORITY 1: Wire Agents into Orchestrator (Activate Phase 5)
-**Why:** Orchestrator is built, but workers aren't using it yet. This activates the coordination system.
+### ✅ COMPLETED: Wire Agents into Orchestrator (Phase 5.2 Done)
+**Status:** All 5 critical workers now coordinate through orchestrator.
 
-**What to wire (in order of impact):**
-1. `communication.worker` — wrap message sending in orchestrator.propose/execute
-   - All WA/SMS/Email messaging goes through orchestrator
-   - Prevents double messaging via Calendar coordination
-   - Enables merchant feedback on messages sent
+**Wired workers:**
+1. ✅ `communication-v2.worker` — all WA/SMS messaging goes through orchestrator
+2. ✅ `abandoned.worker` — cart recovery with medium priority
+3. ✅ `ndr.worker` — logistics decisions with high priority
+4. ✅ `retention.worker` — lifecycle transitions with medium priority
+5. ✅ `winback.worker` — win-back campaigns with low priority
 
-2. `abandoned.worker` — cart recovery decisions
-   - Propose: send/wait/skip via orchestrator
-   - Conflict: if customer also has open NDR, Logistics wins
-   - Outcome: track if cart recovered or ignored
+**What each worker does now:**
+1. Load CustomerMemory
+2. Make decision via decision agent
+3. **Create AgentProposal** with domain/priority/reasoning
+4. **Call AgentOrchestrator.propose()** to check approval
+5. If deferred, reschedule job; if rejected, skip
+6. If approved, execute and **record outcome via recordOutcome()**
+7. Outcomes feed learning loop for pattern discovery
 
-3. `ndr.worker` — shipment routing
-   - Propose: send WA / request address / initiate RTO
-   - Conflict: if customer has pending refund, hold NDR until resolved
-   - Outcome: track if shipment recovered or RTO'd
-
-4. `retention.worker` / `winback.worker` — marketing campaigns
-   - Propose: send offer / silence 90d
-   - Conflict: lower priority, defers 48h if another agent wants to message
-   - Outcome: track if customer ordered after message
+**Conflict resolution in action:**
+- Customer has open NDR + marketing wants to send cart recovery → Logistics wins, Marketing defers 48h
+- Customer at_risk + winback wants to send → Both allowed (different domains), but Marketing gets lower priority
+- Customer has pending refund + retention wants to send → Hold all comms until refund processed
 
 **Integration pattern:** See "Phase 5 Integration Pattern" section above
 
@@ -1104,32 +1104,49 @@ async function handleEvent(customerId) {
 - **Phase 3.2** ✅ — Merchant PWA (exception queue, dashboard, deployed)
 
 ### In Progress
-- **Phase 5** 🔨 — Multi-Agent Orchestration (CORE PHASE 5 COMPLETE, integration ongoing)
+- **Phase 5** 🔨 — Multi-Agent Orchestration (CORE + INTEGRATION COMPLETE)
   - ✅ Orchestrator built (decision bus, conflict resolution, rule engine)
   - ✅ Learning Loop built (outcome tracking, metrics, pattern analysis)
   - ✅ Database schema deployed (AgentDecision, LearningOutcome, AgentFeedback)
   - ✅ Integration examples created (shows how to wire workers)
-  - ⏳ Workers being integrated (communication-v2 complete, 4 more to do)
+  - ✅ **Phase 5.2 COMPLETE:** All 4 critical workers wired into orchestrator
+    - ✅ communication-v2.worker (template + implementation)
+    - ✅ abandoned.worker (cart recovery with orchestrator)
+    - ✅ ndr.worker (logistics decisions with high priority)
+    - ✅ retention.worker (lifecycle-based retention with medium priority)
+    - ✅ winback.worker (win-back campaigns with low priority)
   - ⏳ Testing Phase 3 PWAs (needed before production)
 
 ### Not Yet Started
 - **Phase 4** — Web Surfaces & Stakeholder Apps (analytics, ops, logistics portals)
 - **Phase 5 Advanced** — Cross-domain reasoning, merchant feedback training, advanced patterns
 
-### Key Achievements This Session
+### Key Achievements This Session (May 17-18, 2026)
 1. Built Agent Orchestrator from scratch (400+ lines, fully functional)
 2. Implemented Learning Loop (compounding intelligence system)
 3. Added 3 new database tables for decision tracking
 4. Created 5+ integration examples
 5. Built communication-v2.worker as template for all workers
-6. Updated CLAUDE.md master checklist with complete Phase 5 details
-7. All code committed and schema pushed to production database
+6. **Phase 5.2 COMPLETE:** Wired 5 critical workers into orchestrator
+   - Each worker now proposes decisions → gets orchestrator approval → executes → records outcomes
+   - All messaging now coordinated via Calendar Agent (no double-messaging)
+   - Conflict resolution active: Logistics > Operations > Finance > Marketing
+   - Learning loop collecting decision outcomes for future pattern analysis
+7. Updated CLAUDE.md master checklist with complete Phase 5 details
+8. All code committed and schema pushed to production database
 
 ### Critical Path to Production
-1. **Week 1:** Wire 4 critical workers into orchestrator (abandoned, ndr, retention, retention)
-2. **Week 2:** E2E test Customer PWA (order → tracking link → loaded) + Merchant PWA (JWT → approvals)
-3. **Week 3:** Launch Phase 5 live (orchestrator active, all workers coordinating)
-4. **Week 4+:** Phase 4 analytics, stakeholder views, ops app
+1. ✅ **DONE:** Wire 4 critical workers into orchestrator (abandoned, ndr, retention, winback)
+2. **NEXT:** E2E test Customer PWA (order → tracking link → loaded) + Merchant PWA (JWT → approvals)
+3. **READY:** Launch Phase 5 live (orchestrator active, all workers coordinating)
+4. **THEN:** Phase 4 analytics, stakeholder views, ops app
+
+**Why orchestrator is now live:**
+- All 5 message-sending workers go through AgentOrchestrator.propose/execute
+- Calendar Agent prevents duplicate comms to same customer same day
+- Conflict resolution enforces priority: Logistics (high) > Operations > Finance > Marketing (low)
+- Every decision recorded in AgentDecision table for learning loop
+- Outcomes tracked in LearningOutcome table for weekly pattern analysis
 
 ---
 

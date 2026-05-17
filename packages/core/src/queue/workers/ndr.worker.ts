@@ -5,6 +5,8 @@ import { queueCommunication } from "../queues"
 import type { NdrJobData } from "../queues"
 import { getCustomerMemory, decideNDR, CalendarAgent } from "../../agents"
 import { getShiprocket } from "../../shipping/shiprocket-mcp.server"
+import { AgentOrchestrator, type AgentProposal, AgentDomain, DecisionAction } from "../../orchestrator"
+import { recordOutcome } from "../../learning/feedback-loop"
 
 const MAX_NDR_ATTEMPTS = 3
 const NDR_COOLDOWN_HOURS = 6
@@ -92,12 +94,43 @@ async function processNdrJob(job: Job<NdrJobData>) {
       bestCourierInPincode: pincodeIntelligence?.best_courier,
     })
 
-    // Check calendar before sending
-    const canSend = await calendar.canSend(customer.id, "ndr")
-    if (!canSend.allowed && decision.action === "send_wa") {
-      job.log(`NDR blocked by calendar for ${customer.phone}: ${canSend.reason}`)
+    job.log(`[ndr] Shipment ${shipment.awb} — decision: ${decision.action} (${decision.reasoning})`)
+
+    // ──────────────────────────────────────────────────────────────────────────────
+    // ORCHESTRATOR INTEGRATION (Phase 5)
+    // ──────────────────────────────────────────────────────────────────────────────
+
+    // Create proposal for orchestrator coordination
+    const proposal: AgentProposal = {
+      agentDomain: AgentDomain.Logistics,
+      agentName: "ndr",
+      customerId: customer.id,
+      action: DecisionAction.SendMessage,
+      reasoning: `NDR attempt ${shipment.ndrAttempts + 1}. Stuck ${Math.floor((Date.now() - shipment.createdAt.getTime()) / (1000 * 60 * 60 * 24))} days. Failed attempts: ${shipment.failedAttempts}. Intent: ${decision.messageIntent}`,
+      context: {
+        shipmentId: shipment.id,
+        awb: shipment.awb,
+        orderId: order.id,
+        ndrAttempt: shipment.ndrAttempts + 1,
+        daysInTransit: Math.floor((Date.now() - shipment.createdAt.getTime()) / (1000 * 60 * 60 * 24)),
+        action: decision.action,
+      },
+      confidence: 85, // logistics decisions have high confidence
+      priority: "high", // logistics > marketing
+      retryable: true,
+      idempotencyKey: `ndr-${shipment.id}-attempt${shipment.ndrAttempts + 1}`,
+    }
+
+    // Get orchestrator approval
+    const orchestratorDecision = await AgentOrchestrator.propose(proposal, memory)
+
+    if (!orchestratorDecision.approved) {
+      job.log(`[ndr] Shipment ${shipment.awb} — orchestrator rejected: ${orchestratorDecision.reason}`)
       continue
     }
+
+    // Execute orchestrator decision
+    const outcome = await AgentOrchestrator.execute(proposal, orchestratorDecision)
 
     // Execute decision
     if (decision.action === "send_wa") {
@@ -129,6 +162,15 @@ async function processNdrJob(job: Job<NdrJobData>) {
         },
       })
 
+      // Record outcome for learning loop
+      await recordOutcome(outcome.proposalId, "success", {
+        shipmentId: shipment.id,
+        awb: shipment.awb,
+        ndrAttempt: shipment.ndrAttempts + 1,
+        sentAt: new Date(),
+        channel: "whatsapp",
+      })
+
       if (order.customerId) {
         await db.timelineEvent.create({
           data: {
@@ -136,7 +178,7 @@ async function processNdrJob(job: Job<NdrJobData>) {
             shopId: order.shopId,
             eventType: "ndr_sent",
             title: `NDR attempt ${shipment.ndrAttempts + 1}: ${decision.messageIntent}`,
-            metadata: { shipmentId: shipment.id, awb: shipment.awb, reasoning: decision.reasoning },
+            metadata: { shipmentId: shipment.id, awb: shipment.awb, reasoning: decision.reasoning, proposalId: outcome.proposalId },
           },
         })
       }

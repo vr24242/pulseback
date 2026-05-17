@@ -10,6 +10,8 @@ import {
   CalendarAgent,
   markStaleAsIgnored,
 } from "../../agents"
+import { AgentOrchestrator, type AgentProposal, AgentDomain, DecisionAction } from "../../orchestrator"
+import { recordOutcome } from "../../learning/feedback-loop"
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -179,6 +181,49 @@ async function processSession(sessionId: string): Promise<void> {
     return
   }
 
+  // ──────────────────────────────────────────────────────────────────────────────
+  // ORCHESTRATOR INTEGRATION (Phase 5)
+  // ──────────────────────────────────────────────────────────────────────────────
+
+  // Create proposal for orchestrator coordination
+  const proposal: AgentProposal = {
+    agentDomain: AgentDomain.Marketing,
+    agentName: "abandoned-cart",
+    customerId,
+    action: DecisionAction.SendMessage,
+    reasoning: `Cart recovery touch ${decision.touchNumber}. Value ₹${session.cartValue}. Customer has ${memory.totalOrders} orders, ignored ${memory.recentComms.filter(c => !c.converted).length} recent comms.`,
+    context: {
+      sessionId,
+      touchNumber: decision.touchNumber,
+      cartValue: session.cartValue,
+      itemSummary,
+      offerDiscount: decision.offerDiscount,
+      discountPercent: decision.discountPercent ?? 0,
+      channel: "whatsapp",
+    },
+    confidence: attempt === 0 ? 75 : attempt === 1 ? 70 : 60, // lower confidence on repeat attempts
+    priority: "medium",
+    retryable: true,
+    idempotencyKey: `abandoned-${customerId}-${session.id}-touch${attempt}`,
+  }
+
+  // Get orchestrator approval
+  const orchestratorDecision = await AgentOrchestrator.propose(proposal, memory)
+
+  if (!orchestratorDecision.approved) {
+    console.log(`[abandoned] Session ${sessionId} — orchestrator rejected: ${orchestratorDecision.reason}`)
+
+    // If deferred, reschedule for later
+    if (orchestratorDecision.executeAt) {
+      const delayMs = Math.max(0, orchestratorDecision.executeAt.getTime() - Date.now())
+      console.log(`[abandoned] Session ${sessionId} — rescheduling for ${orchestratorDecision.executeAt.toISOString()}`)
+      // Note: we don't call job.moveToDelayed here because this is a sweep context
+      // The session will be re-picked up by the next sweep
+    }
+
+    return { skipped: true, reason: "orchestrator_blocked", detail: orchestratorDecision.reason }
+  }
+
   // 5. Communication Agent — generate personalised message
   const recoveryLink = buildRecoveryLink(shop.domain, session.shopifyCheckoutToken)
   const touchIntent = `cart_recovery_touch${decision.touchNumber}` as
@@ -207,7 +252,10 @@ async function processSession(sessionId: string): Promise<void> {
     },
   })
 
-  // 6. Queue the communication with outcomeRef stored in body metadata
+  // 6. Execute the orchestrator decision
+  const outcome = await AgentOrchestrator.execute(proposal, orchestratorDecision)
+
+  // 7. Queue the communication with outcomeRef stored in body metadata
   await queueCommunication({
     shopId: shop.id,
     customerId,
@@ -219,7 +267,7 @@ async function processSession(sessionId: string): Promise<void> {
     priority: "medium",
   })
 
-  // 7. Store outcomeRef on a Communication record so we can close the loop later.
+  // 8. Store outcomeRef on a Communication record so we can close the loop later.
   // The communication.worker will create the Communication record; we update it
   // here using the triggerRef so the outcomeRef is available for tracking.
   // We do a soft upsert — if not yet created, we'll patch it after the fact.
@@ -233,10 +281,19 @@ async function processSession(sessionId: string): Promise<void> {
     data: { outcomeRef: comm.outcomeRef },
   })
 
-  // 8. Calendar: record that we sent
+  // 9. Record orchestrator execution outcome for learning loop
+  await recordOutcome(outcome.proposalId, "success", {
+    sessionId,
+    touchNumber: decision.touchNumber,
+    cartValue: session.cartValue,
+    sentAt: new Date(),
+    channel: "whatsapp",
+  })
+
+  // 10. Calendar: record that we sent
   await calendar.recordSent(customerId, "abandoned_cart")
 
-  // 9. Update recovery tracking on the session
+  // 11. Update recovery tracking on the session
   const now = new Date()
   await db.checkoutSession.update({
     where: { id: session.id },
@@ -249,7 +306,7 @@ async function processSession(sessionId: string): Promise<void> {
   })
 
   console.log(
-    `[abandoned] ✓ Session ${sessionId} — touch ${decision.touchNumber}/${MAX_RECOVERY_ATTEMPTS} queued for ${session.phone} | outcomeRef: ${comm.outcomeRef}`
+    `[abandoned] ✓ Session ${sessionId} — touch ${decision.touchNumber}/${MAX_RECOVERY_ATTEMPTS} queued for ${session.phone} | outcomeRef: ${comm.outcomeRef} | proposalId: ${outcome.proposalId}`
   )
 }
 
