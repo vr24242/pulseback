@@ -1,0 +1,21 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npx tsc --noEmit 2>&1 | grep -v 'apps/marketing' | grep 'error' || true",
+            "if": "Edit(apps/shopify/**/*.ts,apps/shopify/**/*.tsx,packages/core/**/*.ts)"
+          },
+          {
+            "type": "command",
+            "command": "DIRECT_URL='postgresql://postgres.qlewszzlsqoxlqrqyrit:Allthewayup2025@aws-1-ap-south-1.pooler.supabase.com:5432/postgres?sslmode=require' DATABASE_URL='postgresql://postgres.qlewszzlsqoxlqrqyrit:Allthewayup2025@aws-1-ap-south-1.pooler.supabase.com:6543/postgres?pgbouncer=true&sslmode=require' npx prisma db push --schema=packages/database/prisma/schema.prisma 2>&1 | tail -3",
+            "if": "Edit(packages/database/prisma/schema.prisma)"
+          }
+        ]
+      }
+    ]
+  }
+}

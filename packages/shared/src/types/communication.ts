@@ -26,6 +26,7 @@ export interface MessagePayload {
   body: string
   subject?: string     // email only
   variables?: Record<string, string>
+  bodyParams?: string[]
   scheduledFor?: Date
 }
 

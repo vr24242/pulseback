@@ -1,0 +1,11 @@
+query RunInput {
+  cart {
+    attribute(key: "_pulseback_cod_blocked") {
+      value
+    }
+  }
+  paymentMethods {
+    id
+    name
+  }
+}

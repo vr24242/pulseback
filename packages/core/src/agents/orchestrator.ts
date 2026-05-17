@@ -76,7 +76,7 @@ Never make up data — always use tools.`
   ]
 
   let response = await client.messages.create({
-    model: "claude-opus-4-6",
+    model: "claude-sonnet-4-5",
     max_tokens: 2048,
     system: systemPrompt,
     tools: MERCHANT_TOOLS,
@@ -102,7 +102,7 @@ Never make up data — always use tools.`
     messages.push({ role: "user", content: toolResults })
 
     response = await client.messages.create({
-      model: "claude-opus-4-6",
+      model: "claude-sonnet-4-5",
       max_tokens: 2048,
       system: systemPrompt,
       tools: MERCHANT_TOOLS,

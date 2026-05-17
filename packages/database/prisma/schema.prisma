@@ -43,7 +43,8 @@ model Shop {
   email       String?
   currency    String   @default("INR")
   timezone    String   @default("Asia/Kolkata")
-  isActive    Boolean  @default(true)
+  isActive      Boolean   @default(true)
+  uninstalledAt DateTime?
 
   // Integration credentials (encrypted at app layer)
   // WhatsApp — AiSensy (recommended for India)
@@ -67,13 +68,29 @@ model Shop {
   metaPixelId       String?
   metaAccessToken   String?
   // Shiprocket
-  shiprocketEmail   String?
-  shiprocketToken   String?
+  shiprocketEmail        String?
+  shiprocketToken        String?
+  shiprocketJwt          String?   // cached JWT from last auth
+  shiprocketJwtExpiresAt DateTime? // JWTs expire in 10 days
+  shiprocketWebhookSecret String?  // HMAC secret for webhook signature verification
+  shiprocketWebhookId    String?   // Shiprocket webhook registration ID
+
+  // Owner / merchant contact
+  ownerPhone        String?  // merchant's WhatsApp for daily briefing
+  ownerName         String?
 
   // Settings
-  codEnabled        Boolean @default(true)
-  rtoThreshold      Int     @default(60)  // hide COD above this score
-  dispatchSlaHours  Int     @default(24)
+  codEnabled         Boolean @default(true)
+  codBlockingEnabled Boolean @default(true)  // when true, hide COD for high-RTO customers
+  rtoThreshold       Int     @default(60)    // hide COD above this score (only if blocking enabled)
+  dispatchSlaHours   Int     @default(24)
+  codFloatAlert      Int     @default(50000) // alert when COD outstanding exceeds this
+
+  // Branding — checkout portal customization
+  brandPrimaryColor   String @default("#7c3aed")
+  brandSecondaryColor String @default("#6366f1")
+  logoUrl             String?
+  checkoutFont        String @default("sans-serif")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -83,6 +100,7 @@ model Shop {
   checkoutSessions CheckoutSession[]
   automations      Automation[]
   communications   Communication[]
+  returnRequests   ReturnRequest[]
 
   @@map("shops")
 }
@@ -170,6 +188,7 @@ model Customer {
   supportTickets   SupportTicket[]
   retentionActions RetentionAction[]
   timeline         TimelineEvent[]
+  returnRequests   ReturnRequest[]
 
   @@unique([shopId, phone])
   @@unique([shopId, email])
@@ -209,6 +228,11 @@ model CheckoutSession {
   discountApplied   Boolean @default(false)
   upsellProductId   String?  // product shown as upsell
   upsellConverted   Boolean @default(false)
+
+  // ── Shipping Intelligence ──
+  shippingCost      Int?      // COD charge in ₹ paise (100 = ₹1)
+  deliveryDate      DateTime? // Estimated delivery date from Shiprocket
+  shippingProvider  String?   // "shiprocket" / "delhivery" / etc
 
   // Attribution
   utmSource   String?
@@ -305,7 +329,8 @@ model Order {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  shipments Shipment[]
+  shipments      Shipment[]
+  returnRequests ReturnRequest[]
 
   @@unique([shopId, shopifyOrderId])
   @@index([shopId, status])
@@ -346,6 +371,10 @@ model Shipment {
   // RTO
   rtoInitiatedAt  DateTime?
   rtoDeliveredAt  DateTime?
+
+  // NDR tracking
+  lastNdrAt      DateTime? // last time an NDR message was sent
+  ndrAttempts    Int       @default(0) // total NDR messages sent
 
   // Proactive comms sent
   dispatchNotifSent    Boolean @default(false)
@@ -409,6 +438,11 @@ model Communication {
   routedToAgent Boolean @default(false)
 
   createdAt DateTime @default(now())
+
+  // Outcome tracking — the feedback loop
+  outcomeRef  String?   @unique  // UUID set at send time, used to close the loop
+  outcome     String?            // converted | replied | ignored | blocked | delivered | failed
+  outcomeAt   DateTime?
 
   @@index([shopId, customerId])
   @@index([shopId, triggerType])
@@ -552,6 +586,106 @@ model Automation {
   @@index([shopId, trigger])
   @@index([shopId, isActive])
   @@map("automations")
+}
+
+// ─────────────────────────────────────────────────────────────
+// OTP CODE — Postgres-backed OTP store. Replaces in-memory Map.
+// Multi-instance safe. Auto-expires.
+// ─────────────────────────────────────────────────────────────
+model OtpCode {
+  id        String   @id @default(cuid())
+  shopId    String
+  phone     String   // normalized 10-digit
+  code      String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@unique([shopId, phone])
+  @@index([expiresAt])
+  @@map("otp_codes")
+}
+
+// ─────────────────────────────────────────────────────────────
+// WHATSAPP SESSION — Conversation state for Customer Agent.
+// Enables multi-turn, context-aware conversations.
+// ─────────────────────────────────────────────────────────────
+model WhatsAppSession {
+  id         String  @id @default(cuid())
+  shopId     String
+  phone      String  // customer's normalized phone
+  customerId String?
+
+  // Current agent state
+  currentIntent String?
+  // cancel | return | address_change | order_status | complaint | ndr_response | cod_confirm
+
+  contextJson Json @default("{}")
+  // { orderId, step, pendingAction, data, ... }
+
+  // Full conversation history for agent context
+  history Json @default("[]")
+  // [{ role: "user"|"assistant", content: string, timestamp: string }]
+
+  lastMessageAt DateTime @default(now())
+  expiresAt     DateTime // 24h from lastMessageAt, reset on each message
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([shopId, phone])
+  @@index([shopId, phone])
+  @@index([expiresAt])
+  @@map("whatsapp_sessions")
+}
+
+// ─────────────────────────────────────────────────────────────
+// RETURN REQUEST — Returns OS. Customer-initiated return flow.
+// ─────────────────────────────────────────────────────────────
+model ReturnRequest {
+  id         String  @id @default(cuid())
+  shopId     String
+  shop       Shop    @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  orderId    String
+  order      Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  customerId String?
+  customer   Customer? @relation(fields: [customerId], references: [id])
+
+  // What's being returned
+  items          Json    // ReturnItem[] — { title, quantity, price, reason }
+  reason         String  // quality | wrong_item | not_needed | damaged | size | other
+  reasonNote     String? // customer's own words
+  refundMethod   String  // original_payment | store_credit | bank_transfer
+  refundAmount   Float
+
+  // Photos (customer uploads via presigned URL or base64 links)
+  photoUrls      Json    @default("[]") // string[]
+
+  // Status lifecycle
+  status         String  @default("pending")
+  // pending | approved | rejected | pickup_scheduled | picked_up | processed | refunded
+
+  // Merchant action
+  rejectionReason String?
+  approvedAt      DateTime?
+  rejectedAt      DateTime?
+
+  // Shiprocket reverse pickup
+  shiprocketOrderId   String?
+  pickupScheduledAt   DateTime?
+  pickedUpAt          DateTime?
+
+  // Refund tracking
+  refundInitiatedAt   DateTime?
+  refundCompletedAt   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([shopId, status])
+  @@index([orderId])
+  @@index([customerId])
+  @@map("return_requests")
 }
 
 // ─────────────────────────────────────────────────────────────

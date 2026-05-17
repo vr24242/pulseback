@@ -1,0 +1,7 @@
+api_version = "2025-07"
+uid = "11ba84c3-166d-d4ca-3cdf-e6a0cce4f6553c6608f2"
+
+[[extensions]]
+name = "PulseOS COD Blocker"
+handle = "pulseback-payment-customization"
+type = "payment_customization"

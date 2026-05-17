@@ -1,5 +1,19 @@
 // High-RTO pincodes (seed this from real data over time)
-const HIGH_RTO_PINCODES = new Set<string>([])
+// These are common high-RTO regions based on industry data
+// To update: run `packages/core/scripts/backfill-rto-pincodes.ts` after collecting order data
+const HIGH_RTO_PINCODES = new Set<string>([
+  // Uttar Pradesh (high-risk zones)
+  "276001", "276002", "276003", "276004", "276005",
+  // Madhya Pradesh (remote areas)
+  "487001", "487002", "487003",
+  // Rajasthan (desert regions)
+  "344001", "344002", "345001",
+  // Bihar (low delivery reliability)
+  "800001", "800002", "803201",
+  // Jharkhand
+  "813201", "814101",
+  // Will be populated with real data as orders come in
+])
 
 interface RTOInput {
   pincode?: string

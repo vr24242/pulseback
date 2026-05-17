@@ -1,0 +1,24 @@
+{
+  "name": "payment-customization",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "shopify app build"
+  },
+  "dependencies": {
+    "@shopify/shopify_function": "~2.0.0"
+  },
+  "graphql": {
+    "schema": "./schema.graphql",
+    "documents": ["./src/*.graphql"],
+    "extensions": {
+      "codegen": {
+        "generates": {
+          "./src/api.generated.d.ts": {
+            "plugins": ["typescript", "typescript-operations"]
+          }
+        }
+      }
+    }
+  }
+}

@@ -15,23 +15,37 @@
     "./retention": "./src/retention/index.ts",
     "./marketing": "./src/marketing/index.ts",
     "./agents": "./src/agents/index.ts",
-    "./events": "./src/events/index.ts"
+    "./events": "./src/events/index.ts",
+    "./queue": "./src/queue/index.ts",
+    "./queue/communication.worker": "./src/queue/workers/communication.worker.ts",
+    "./queue/tracking.worker": "./src/queue/workers/tracking.worker.ts",
+    "./queue/ndr.worker": "./src/queue/workers/ndr.worker.ts",
+    "./queue/webhook.worker": "./src/queue/workers/webhook.worker.ts",
+    "./queue/abandoned.worker": "./src/queue/workers/abandoned.worker.ts",
+    "./queue/retention.worker": "./src/queue/workers/retention.worker.ts",
+    "./queue/winback.worker": "./src/queue/workers/winback.worker.ts",
+    "./queue/briefing.worker": "./src/queue/workers/briefing.worker.ts",
+    "./queue/scheduler": "./src/queue/scheduler.ts",
+    "./utils/language": "./src/utils/language.ts",
+    "./shipping/shiprocket": "./src/shipping/shiprocket.ts",
+    "./location": "./src/location/index.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.27.0",
     "@d2c/database": "*",
     "@d2c/shared": "*",
-    "@anthropic-ai/sdk": "^0.27.0",
-    "bullmq": "^5.0.0",
-    "ioredis": "^5.3.0",
     "axios": "^1.7.0",
-    "date-fns": "^3.6.0"
+    "bullmq": "^5.0.0",
+    "date-fns": "^3.6.0",
+    "franc": "^6.2.0",
+    "ioredis": "^5.3.0"
   },
   "devDependencies": {
-    "typescript": "^5.4.0",
-    "@types/node": "^20.0.0"
+    "@types/node": "^20.0.0",
+    "typescript": "^5.4.0"
   }
 }

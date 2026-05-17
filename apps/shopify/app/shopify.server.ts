@@ -2,6 +2,7 @@ import "@shopify/shopify-app-remix/adapters/node"
 import {
   ApiVersion,
   AppDistribution,
+  DeliveryMethod,
   shopifyApp,
 } from "@shopify/shopify-app-remix/server"
 import { PrismaSessionStorage } from "@shopify/shopify-app-session-storage-prisma"
@@ -36,13 +37,13 @@ const shopify = shopifyApp({
     },
   },
   webhooks: {
-    ORDERS_CREATE:    { deliveryMethod: "http", callbackUrl: "/webhooks/orders/create" },
-    ORDERS_UPDATED:   { deliveryMethod: "http", callbackUrl: "/webhooks/orders/updated" },
-    CUSTOMERS_CREATE: { deliveryMethod: "http", callbackUrl: "/webhooks/customers/create" },
-    CUSTOMERS_UPDATE: { deliveryMethod: "http", callbackUrl: "/webhooks/customers/update" },
-    CHECKOUTS_CREATE: { deliveryMethod: "http", callbackUrl: "/webhooks/checkouts/create" },
-    CHECKOUTS_UPDATE: { deliveryMethod: "http", callbackUrl: "/webhooks/checkouts/update" },
-    APP_UNINSTALLED:  { deliveryMethod: "http", callbackUrl: "/webhooks/app/uninstalled" },
+    ORDERS_CREATE:    { deliveryMethod: DeliveryMethod.Http, callbackUrl: "/webhooks/orders/create" },
+    ORDERS_UPDATED:   { deliveryMethod: DeliveryMethod.Http, callbackUrl: "/webhooks/orders/updated" },
+    CUSTOMERS_CREATE: { deliveryMethod: DeliveryMethod.Http, callbackUrl: "/webhooks/customers/create" },
+    CUSTOMERS_UPDATE: { deliveryMethod: DeliveryMethod.Http, callbackUrl: "/webhooks/customers/update" },
+    CHECKOUTS_CREATE: { deliveryMethod: DeliveryMethod.Http, callbackUrl: "/webhooks/checkouts/create" },
+    CHECKOUTS_UPDATE: { deliveryMethod: DeliveryMethod.Http, callbackUrl: "/webhooks/checkouts/update" },
+    APP_UNINSTALLED:  { deliveryMethod: DeliveryMethod.Http, callbackUrl: "/webhooks/app/uninstalled" },
   },
 })
 

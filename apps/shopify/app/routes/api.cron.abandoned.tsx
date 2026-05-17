@@ -3,8 +3,12 @@ import { json } from "@remix-run/node"
 import { db } from "@d2c/database"
 import { sendAbandonedCartRecovery } from "@d2c/core"
 
-// Called every 5 minutes by external cron (cron-job.org / Fly scheduled machine)
-// Protected by CRON_SECRET header
+// Called every 5 minutes by external cron (cron-job.org)
+// Header: X-Cron-Secret: <CRON_SECRET>
+//
+// Flow:
+//   Shopify fires CHECKOUTS_UPDATE with abandoned_checkout_url → webhook sets status="abandoned", abandonedAt=now
+//   This cron runs every 5 min → finds sessions abandoned ≥5 min ago → sends WhatsApp
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const secret = request.headers.get("x-cron-secret")
@@ -12,33 +16,39 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return json({ error: "Unauthorized" }, { status: 401 })
   }
 
-  const cutoff = new Date(Date.now() - 30 * 60 * 1000) // 30 min ago
-  const maxAge = new Date(Date.now() - 24 * 60 * 60 * 1000) // don't retry after 24h
+  const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000)
+  const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000)
 
-  // Find abandoned checkouts not yet recovered
-  const abandonedSessions = await db.checkoutSession.findMany({
+  // Sessions Shopify explicitly marked abandoned, at least 5 min ago, not yet messaged
+  const sessions = await db.checkoutSession.findMany({
     where: {
-      status: "active",
-      updatedAt: { lt: cutoff, gt: maxAge },
+      status: "abandoned",
+      abandonedAt: { lte: fiveMinAgo, gte: twentyFourHoursAgo },
       recoverySentAt: null,
-      OR: [
-        { phone: { not: null } },
-        { email: { not: null } },
-      ],
+      phone: { not: null },
     },
-    include: { shop: true },
-    take: 50, // process max 50 per run
+    include: {
+      shop: {
+        select: {
+          id: true,
+          aiSensyApiKey: true,
+          watiApiToken: true,
+          watiPhoneNumber: true,
+          waPhoneNumberId: true,
+          waAccessToken: true,
+        },
+      },
+    },
+    take: 50,
   })
 
   let sent = 0
   let failed = 0
 
-  for (const session of abandonedSessions) {
+  for (const session of sessions) {
     try {
-      const phone = session.phone
-      if (!phone) continue
+      const phone = session.phone!
 
-      // Get customer name if exists
       let customerName = "there"
       if (session.customerId) {
         const customer = await db.customer.findUnique({
@@ -55,22 +65,24 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         name: customerName,
         cartValue,
         discountCode: "SAVE10",
-        phoneNumberId: session.shop.waPhoneNumberId ?? undefined,
-        accessToken: session.shop.waAccessToken ?? undefined,
+        shopConfig: {
+          aiSensyApiKey: session.shop.aiSensyApiKey,
+          watiApiToken: session.shop.watiApiToken,
+          watiApiUrl: session.shop.watiPhoneNumber,
+          waPhoneNumberId: session.shop.waPhoneNumberId,
+          waAccessToken: session.shop.waAccessToken,
+        },
       })
 
       if (result.success) {
         await db.checkoutSession.update({
           where: { id: session.id },
           data: {
-            status: "abandoned",
-            abandonedAt: session.abandonedAt ?? new Date(),
             recoverySentAt: new Date(),
             recoveryAttempts: { increment: 1 },
           },
         })
 
-        // Log communication
         if (session.customerId) {
           await db.communication.create({
             data: {
@@ -94,13 +106,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         failed++
       }
     } catch (err) {
-      console.error("[cron/abandoned] session error", session.id, err)
+      console.error("[cron/abandoned]", session.id, err)
       failed++
     }
   }
 
-  return json({ processed: abandonedSessions.length, sent, failed })
+  return json({ processed: sessions.length, sent, failed })
 }
 
-// GET for health check
 export const loader = async () => json({ ok: true, endpoint: "abandoned-cart-cron" })

@@ -1,0 +1,25 @@
+api_version = "2025-07"
+uid = "235c778c-1022-8d83-6815-8492a658cabcb2a25441"
+
+[[extensions]]
+name = "RTO Checkout Capture"
+handle = "rto-checkout"
+type = "ui_extension"
+
+  [[extensions.targeting]]
+  module = "./src/index.tsx"
+  target = "purchase.checkout.contact.render-after"
+
+  [[extensions.targeting]]
+  module = "./src/index.tsx"
+  target = "purchase.checkout.delivery-address.render-after"
+
+[extensions.capabilities]
+network_access = true
+
+[extensions.settings]
+  [[extensions.settings.fields]]
+  key = "shop_domain"
+  type = "single_line_text_field"
+  name = "Shop Domain"
+  description = "Your myshopify.com domain (e.g. mystore.myshopify.com)"

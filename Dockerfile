@@ -21,7 +21,7 @@ COPY apps/shopify/ ./apps/shopify/
 WORKDIR /app/packages/database
 RUN npx prisma generate
 
-# Build the Shopify app
+# Build the Shopify app + worker
 WORKDIR /app/apps/shopify
 RUN npm run build
 
@@ -30,3 +30,4 @@ ENV PORT=3000
 ENV NODE_ENV=production
 
 CMD ["npm", "run", "start"]
+

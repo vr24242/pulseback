@@ -1,0 +1,7 @@
+api_version = "2024-10"
+uid = "3db70551-75cb-dbb0-81fe-bd7a01146b177263077c"
+
+[[extensions]]
+type = "theme_app_extension"
+name = "Pulseback Checkout"
+handle = "pulseback-checkout"

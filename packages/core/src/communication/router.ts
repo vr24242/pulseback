@@ -73,9 +73,9 @@ export async function sendMessage(
     const watiResult = await sendWhatsAppTemplate({
       phone: customer.phone,
       templateName: payload.templateName,
-      variables: (payload.variables as Record<string, string>) ?? {},
+      bodyParams: (payload.bodyParams as string[] | undefined) ?? [],
     })
-    result = { success: watiResult.result, messageId: watiResult.messageId, channel: "whatsapp" }
+    result = { success: watiResult.success, messageId: watiResult.messageId, channel: "whatsapp" }
   }
 
   // Log the communication

@@ -41,6 +41,28 @@ const SUPPORT_TOOLS: Anthropic.Tool[] = [
     },
   },
   {
+    name: "update_delivery_address",
+    description: "Update the delivery address for an order that hasn't been dispatched yet",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        orderId: { type: "string" },
+        newAddress: {
+          type: "object",
+          properties: {
+            line1: { type: "string" },
+            line2: { type: "string" },
+            city: { type: "string" },
+            state: { type: "string" },
+            pincode: { type: "string" },
+          },
+          required: ["line1", "city", "pincode"],
+        },
+      },
+      required: ["orderId", "newAddress"],
+    },
+  },
+  {
     name: "escalate_to_human",
     description: "Escalate the ticket to a human agent with context",
     input_schema: {
@@ -60,6 +82,8 @@ export async function handleSupportMessage(input: {
   ticketId: string
   incomingMessage: string
   conversationHistory: Array<{ role: string; content: string }>
+  language?: string          // detected by franc — "hindi" | "english" | "tamil" etc.
+  needsRegionalLang?: boolean // true → Sarvam AI when available (currently falls back to English)
 }): Promise<{ reply: string; escalated: boolean; actionTaken?: string }> {
   const customer = await db.customer.findUnique({
     where: { id: input.customerId },
@@ -78,8 +102,14 @@ export async function handleSupportMessage(input: {
   const recentOrder = customer.orders[0]
   const recentShipment = recentOrder?.shipments[0]
 
+  const languageInstruction = input.needsRegionalLang && input.language !== "english"
+    ? `LANGUAGE: The customer is writing in ${input.language}. Respond in simple, friendly ${input.language} using common words. If you are not confident in ${input.language}, respond in English — do not guess.`
+    : "LANGUAGE: Respond in English."
+
   const systemPrompt = `You are the AI support agent for this D2C brand.
 You are helpful, empathetic, and efficient. Resolve issues without making the customer repeat themselves.
+
+${languageInstruction}
 
 CUSTOMER PROFILE:
 - Name: ${customer.name ?? "Customer"}
@@ -111,7 +141,7 @@ RULES:
   ]
 
   let response = await client.messages.create({
-    model: "claude-opus-4-6",
+    model: "claude-sonnet-4-5",
     max_tokens: 1024,
     system: systemPrompt,
     tools: SUPPORT_TOOLS,
@@ -138,7 +168,7 @@ RULES:
     messages.push({ role: "user", content: toolResults })
 
     response = await client.messages.create({
-      model: "claude-opus-4-6",
+      model: "claude-sonnet-4-5",
       max_tokens: 1024,
       system: systemPrompt,
       tools: SUPPORT_TOOLS,
@@ -207,6 +237,28 @@ async function executeSupportTool(
       data: { status: "cancelled", cancelledAt: new Date(), cancelReason: input.reason as string },
     })
     return { success: true }
+  }
+
+  if (toolName === "update_delivery_address") {
+    const order = await db.order.findUnique({ where: { id: input.orderId as string } })
+    if (!order) return { success: false, error: "Order not found" }
+    if (["dispatched", "delivered", "returned", "cancelled"].includes(order.status)) {
+      return {
+        success: false,
+        error: `Cannot update address — order is already ${order.status}. Please contact support for help.`,
+      }
+    }
+    const newAddress = input.newAddress as {
+      line1: string; line2?: string; city: string; state?: string; pincode: string
+    }
+    await db.order.update({
+      where: { id: input.orderId as string },
+      data: {
+        shippingAddress: newAddress as unknown as import("@prisma/client").Prisma.InputJsonValue,
+        pincode: newAddress.pincode,
+      },
+    })
+    return { success: true, updatedAddress: newAddress }
   }
 
   if (toolName === "escalate_to_human") {

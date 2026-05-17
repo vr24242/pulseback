@@ -27,3 +27,6 @@ export * from "./agents/support-agent"
 
 // Event Bus
 export * from "./events/bus"
+
+// Handlers (self-registering — import to activate)
+export * from "./handlers/communication"

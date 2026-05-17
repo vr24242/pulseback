@@ -4,7 +4,7 @@ application_url = "https://pulseback.fly.dev"
 embedded = false
 
 [access_scopes]
-scopes = "write_customers,write_orders,write_products,read_checkouts"
+scopes = "write_customers,write_orders,write_products,read_checkouts,write_order_edits"
 
 [auth]
 redirect_urls = [

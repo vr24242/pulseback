@@ -1,0 +1,18 @@
+{
+  "name": "rto-checkout",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "shopify app build"
+  },
+  "dependencies": {
+    "@shopify/ui-extensions": "2025.7.4",
+    "@shopify/ui-extensions-react": "2025.7.4",
+    "react": "^18.2.0",
+    "react-reconciler": "0.29.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.0",
+    "typescript": "^5.4.0"
+  }
+}
