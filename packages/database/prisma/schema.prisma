@@ -194,6 +194,9 @@ model Customer {
   returnRequests   ReturnRequest[]
   savedAddresses   SavedAddress[]
   loyaltyPoints    CustomerLoyaltyPoints?
+  agentDecisions   AgentDecision[] // Phase 5: audit trail of all agent decisions
+  learningOutcomes LearningOutcome[] // Phase 5: outcomes for learning loop
+  agentFeedback    AgentFeedback[] // Phase 5: merchant feedback on decisions
 
   @@unique([shopId, phone])
   @@unique([shopId, email])
@@ -875,4 +878,111 @@ model BNPLPlan {
 
   @@index([shopId])
   @@map("bnpl_plans")
+}
+
+// ─────────────────────────────────────────────────────────────
+// AGENT DECISIONS — Phase 5 Orchestration Audit Trail
+// ─────────────────────────────────────────────────────────────
+// Every decision made by any agent is recorded here.
+// This enables:
+// - Audit trail (merchant can see why an action happened)
+// - Learning loop (outcomes feed back to improve decisions)
+// - Conflict resolution tracking (how often do agents conflict?)
+// - Performance metrics (which agents have highest success rates?)
+model AgentDecision {
+  id String @id @default(cuid())
+  customerId String
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  // Agent identity
+  agentDomain String // "support" | "operations" | "logistics" | "finance" | "marketing"
+  agentName String // e.g., "abandoned-cart", "ndr", "loyalty"
+
+  // Decision details
+  action String // e.g., "send_message", "block_cod", "escalate_to_human"
+  reasoning String // why the agent made this decision
+  context Json? // additional context (discount %, retry count, etc.)
+  confidence Int // 0-100, how sure is the agent?
+  priority String // "low" | "medium" | "high"
+
+  // Orchestrator evaluation
+  orchestratorReason String? // why orchestrator approved/rejected
+  overrides Json? // rules applied by orchestrator (JSON array)
+  conflicts Json? // conflicts resolved (JSON array)
+
+  // Execution
+  status String @default("pending") // pending | queued | executing | executed | failed | rejected
+  idempotencyKey String @unique // prevent duplicate execution
+  executeAt DateTime? // when should this execute?
+  queuedAt DateTime? // when was it queued?
+  executedAt DateTime? // when was it actually executed?
+  result Json? // what happened when it executed?
+  error String? // error message if execution failed
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  learningOutcomes LearningOutcome[]
+  agentFeedback    AgentFeedback[]
+
+  @@index([customerId])
+  @@index([agentDomain])
+  @@index([status])
+  @@index([createdAt])
+  @@map("agent_decisions")
+}
+
+// ─────────────────────────────────────────────────────────────
+// LEARNING OUTCOMES — Outcome Tracking for Learning Loop
+// ─────────────────────────────────────────────────────────────
+// Every decision's outcome is recorded here for fast querying and analysis.
+// This feeds the learning loop: agents get better over time as outcomes improve.
+model LearningOutcome {
+  id String @id @default(cuid())
+  decisionId String
+  decision AgentDecision @relation(fields: [decisionId], references: [id], onDelete: Cascade)
+
+  customerId String
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  agentDomain String
+  agentName String
+  action String
+
+  outcome String // "success" | "partial" | "failure"
+  confidence Int? // agent's confidence (0-100) at time of decision
+  metadata Json? // additional context (e.g., conversion time, customer segment)
+
+  createdAt DateTime @default(now())
+
+  @@index([customerId])
+  @@index([agentDomain])
+  @@index([outcome])
+  @@index([createdAt])
+  @@map("learning_outcomes")
+}
+
+// ─────────────────────────────────────────────────────────────
+// AGENT FEEDBACK — Merchant Overrides for Training
+// ─────────────────────────────────────────────────────────────
+// When merchants override an agent decision, we record it as training data.
+// "Merchant said NO, but agent said YES" → improves future decisions.
+model AgentFeedback {
+  id String @id @default(cuid())
+  decisionId String
+  decision AgentDecision @relation(fields: [decisionId], references: [id], onDelete: Cascade)
+
+  customerId String
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  agentDomain String
+  merchantDecision String // "approved" | "overridden" | "escalated"
+  merchantReason String?
+
+  createdAt DateTime @default(now())
+
+  @@index([customerId])
+  @@index([agentDomain])
+  @@index([createdAt])
+  @@map("agent_feedback")
 }
