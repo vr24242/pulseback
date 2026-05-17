@@ -290,6 +290,17 @@ export default function Settings() {
           <p style={muted}>Configure WhatsApp, automations, and integrations</p>
         </div>
 
+        {/* ── Shop ID Info ── */}
+        <div style={{ ...card, marginBottom: 24, background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.2)" }}>
+          <p style={{ ...muted, marginBottom: 8 }}>Your Shop ID (for PWA testing):</p>
+          <div style={codeTile}>
+            <code style={{ fontSize: 12, color: "#a5a0ff", fontFamily: "monospace", wordBreak: "break-all" }}>
+              {shop?.id}
+            </code>
+          </div>
+          <p style={{ ...muted, marginTop: 8, fontSize: 11 }}>Use this ID to generate JWT tokens for testing the Merchant and Customer PWAs.</p>
+        </div>
+
         {/* ── Success / Error Banner ── */}
         {actionData?.success && (
           <div
