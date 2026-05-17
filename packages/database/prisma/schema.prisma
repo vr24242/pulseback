@@ -101,6 +101,9 @@ model Shop {
   automations      Automation[]
   communications   Communication[]
   returnRequests   ReturnRequest[]
+  promoCodes       PromoCode[]
+  loyaltyProgram   LoyaltyProgram?
+  bnplPlans        BNPLPlan[]
 
   @@map("shops")
 }
@@ -190,6 +193,7 @@ model Customer {
   timeline         TimelineEvent[]
   returnRequests   ReturnRequest[]
   savedAddresses   SavedAddress[]
+  loyaltyPoints    CustomerLoyaltyPoints?
 
   @@unique([shopId, phone])
   @@unique([shopId, email])
@@ -259,6 +263,21 @@ model CheckoutSession {
   discountApplied   Boolean @default(false)
   upsellProductId   String?  // product shown as upsell
   upsellConverted   Boolean @default(false)
+
+  // ── Promo Code & Loyalty ──
+  promoCodeUsed     String?  // code string
+  promoDiscountAmount Int? // discount applied in ₹ paise
+  loyaltyPointsRedeemed Int? // points redeemed for discount
+  loyaltyDiscountAmount Int? // discount from loyalty points
+
+  // ── BNPL ──
+  bnplPlanId        String?  // reference to BNPLPlan
+  bnplPlan          BNPLPlan? @relation(fields: [bnplPlanId], references: [id])
+
+  // ── Gift Wrap & Extras ──
+  giftWrapSelected  Boolean @default(false)
+  giftWrapPrice     Int @default(0) // in paise
+  savingsAmount     Int @default(0) // total savings shown to customer
 
   // ── Shipping Intelligence ──
   shippingCost      Int?      // COD charge in ₹ paise (100 = ₹1)
@@ -353,6 +372,22 @@ model Order {
   upsellProductId String?
   upsellConverted Boolean @default(false)
   upsellRevenue   Float?
+
+  // ── Promo Code & Loyalty ──
+  promoCodeUsed        String?  // code that was applied
+  promoDiscountAmount  Float @default(0)
+  loyaltyPointsRedeemed Int @default(0)
+  loyaltyDiscountAmount Float @default(0)
+  loyaltyPointsEarned  Int @default(0)
+
+  // ── BNPL ──
+  bnplPlanId String?
+  bnplPlan   BNPLPlan? @relation(fields: [bnplPlanId], references: [id])
+  bnplSubscriptionId String? // Razorpay subscription ID
+
+  // ── Gift Wrap & Extras ──
+  giftWrapSelected Boolean @default(false)
+  giftWrapPrice    Float @default(0)
 
   // Source
   sourceCheckoutToken String?
@@ -742,4 +777,102 @@ model MarketingEvent {
   @@index([shopId, eventName])
   @@index([shopId, firedAt])
   @@map("marketing_events")
+}
+
+// ─────────────────────────────────────────────────────────────
+// PROMO CODE — Discount codes/coupons for checkout
+// ─────────────────────────────────────────────────────────────
+model PromoCode {
+  id String @id @default(cuid())
+  shopId String
+  shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  code String @unique // "SAVE20"
+  discountType String // "percentage" | "fixed"
+  discountValue Float // 20 for 20%, or 500 for ₹500
+  maxRedemptions Int? // null = unlimited
+  redemptions Int @default(0)
+
+  // Eligibility
+  minOrderValue Float? // minimum cart value
+  maxUsesPerCustomer Int @default(1)
+  applicableOnFirstOrder Boolean @default(false)
+
+  // Dates
+  validFrom DateTime
+  validUntil DateTime
+
+  createdAt DateTime @default(now())
+
+  @@index([shopId, code])
+  @@map("promo_codes")
+}
+
+// ─────────────────────────────────────────────────────────────
+// LOYALTY PROGRAM — Shop-level loyalty settings
+// ─────────────────────────────────────────────────────────────
+model LoyaltyProgram {
+  id String @id @default(cuid())
+  shopId String @unique
+  shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  pointsPerRupee Float @default(1.0) // 1 point per ₹1 spent
+  pointsExpiryDays Int? // null = never expire
+  redeemPointsValue Float @default(100) // 100 points = ₹100
+  minimumPointsToRedeem Int @default(100)
+
+  enabled Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("loyalty_programs")
+}
+
+// ─────────────────────────────────────────────────────────────
+// CUSTOMER LOYALTY POINTS — Track customer points balance
+// ─────────────────────────────────────────────────────────────
+model CustomerLoyaltyPoints {
+  id String @id @default(cuid())
+  customerId String @unique
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  totalPoints Float @default(0)
+  redeemedPoints Float @default(0)
+  availablePoints Float @default(0)
+  lastPointsAddedAt DateTime?
+  lastPointsRedeemedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("customer_loyalty_points")
+}
+
+// ─────────────────────────────────────────────────────────────
+// BNPL / INSTALLMENT PLANS — Buy Now Pay Later options
+// ─────────────────────────────────────────────────────────────
+model BNPLPlan {
+  id String @id @default(cuid())
+  shopId String
+  shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  name String // "3 Months @ 0% interest"
+  months Int
+  interestRate Float @default(0)
+  minOrderValue Float @default(2500)
+  maxOrderValue Float?
+
+  provider String @default("razorpay") // razorpay | jio | other
+  razorpayPlanId String? // Razorpay plan ID for subscriptions
+
+  enabled Boolean @default(true)
+
+  checkoutSessions CheckoutSession[]
+  orders Order[]
+
+  createdAt DateTime @default(now())
+
+  @@index([shopId])
+  @@map("bnpl_plans")
 }

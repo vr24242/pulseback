@@ -87,14 +87,40 @@ cd apps/shopify && npx shopify app deploy --allow-updates
 ## Schema Constraints
 
 ```
-Customer        unique: shopId_phone, shopId_email
-Order           unique: shopId_shopifyOrderId
-CheckoutSession unique: shopifyCheckoutToken
-OtpCode         unique: shopId_phone
-WhatsAppSession unique: shopId_phone
-Communication   no orderId relation — query via triggerRef field
-Order           no city/state fields — address in shippingAddress JSON
+Customer                unique: shopId_phone, shopId_email
+Order                   unique: shopId_shopifyOrderId
+CheckoutSession         unique: shopifyCheckoutToken
+OtpCode                 unique: shopId_phone
+WhatsAppSession         unique: shopId_phone
+Communication           no orderId relation — query via triggerRef field
+Order                   no city/state fields — address in shippingAddress JSON
+PromoCode               unique: code (global)
+LoyaltyProgram          unique: shopId (one per shop)
+CustomerLoyaltyPoints   unique: customerId (one per customer)
 ```
+
+## New Phase 2 Tier 3 Models (Added)
+
+**PromoCode** - discount codes/coupons
+- code (unique), discountType (percentage|fixed), discountValue
+- maxRedemptions, maxUsesPerCustomer, applicableOnFirstOrder
+- minOrderValue eligibility
+- validFrom, validUntil date range
+
+**LoyaltyProgram** - shop-level loyalty settings
+- pointsPerRupee (1.0 = 1 point per ₹1 spent)
+- pointsExpiryDays (null = never expire)
+- redeemPointsValue (100 points = ₹100)
+- minimumPointsToRedeem
+
+**CustomerLoyaltyPoints** - track customer points
+- totalPoints, redeemedPoints, availablePoints
+- lastPointsAddedAt, lastPointsRedeemedAt
+
+**BNPLPlan** - buy now pay later options
+- name, months, interestRate, minOrderValue, maxOrderValue
+- provider (razorpay|jio|other)
+- razorpayPlanId (for subscription integration)
 
 ---
 
