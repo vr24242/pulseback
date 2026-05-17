@@ -1,10 +1,6 @@
 {
   "buildCommand": "cd ../.. && npm run build --filter=@d2c/merchant-pwa",
   "outputDirectory": "apps/merchant-pwa/dist",
-  "env": {
-    "VITE_API_URL": "@vite_api_url"
-  },
-  "envPrefix": "VITE_",
   "headers": [
     {
       "source": "/service-worker.js",
