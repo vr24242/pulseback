@@ -3,9 +3,6 @@ import { db } from "@d2c/database"
 async function backfillRTOPincodes() {
   // Get all orders and analyze RTO rates by pincode
   const orders = await db.order.findMany({
-    where: {
-      shippingAddress: { not: null },
-    },
     select: {
       id: true,
       isRTO: true,

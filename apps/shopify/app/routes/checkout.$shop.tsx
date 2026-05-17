@@ -3,6 +3,8 @@ import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node"
 import { json } from "@remix-run/node"
 import { useLoaderData } from "@remix-run/react"
 import { db } from "@d2c/database"
+import { useSavedAddresses } from "../hooks/useSavedAddresses"
+import { SavedAddressesPanel } from "../components/SavedAddressesPanel"
 
 // Razorpay SDK injected at runtime via script tag
 declare global {
@@ -106,8 +108,21 @@ export default function CheckoutPage() {
   const [checkingShipping, setCheckingShipping] = useState(false)
   const [validatingPincode, setValidatingPincode] = useState(false)
   const [pincodeError, setPincodeError] = useState("")
+  const [selectedAddressId, setSelectedAddressId] = useState<string | undefined>()
+  const [showSaveAddress, setShowSaveAddress] = useState(false)
+  const [addressLabel, setAddressLabel] = useState("")
+
+  // Saved addresses
+  const savedAddresses = useSavedAddresses(customer?.customerId ?? null)
 
   const otpRefs = useRef<Array<HTMLInputElement | null>>([])
+
+  // Fetch saved addresses when customer logs in
+  useEffect(() => {
+    if (customer?.customerId) {
+      savedAddresses.fetchAddresses()
+    }
+  }, [customer?.customerId])
 
   // Validate & auto-fill city/state when pincode changes (debounced)
   useEffect(() => {
@@ -512,6 +527,34 @@ export default function CheckoutPage() {
                 👋 Welcome back! You've ordered {customer.totalOrders} time{customer.totalOrders !== 1 ? "s" : ""} — your address is pre-filled.
               </div>
             )}
+
+            {/* Saved Addresses Panel */}
+            {savedAddresses.addresses.length > 0 && (
+              <SavedAddressesPanel
+                addresses={savedAddresses.addresses}
+                selectedAddressId={selectedAddressId}
+                onSelectAddress={addr => {
+                  setSelectedAddressId(addr.id)
+                  setName(addr.name)
+                  setAddress1(addr.address1)
+                  setAddress2(addr.address2 || "")
+                  setCity(addr.city)
+                  setState(addr.state)
+                  setPincode(addr.pincode)
+                  if (addr.phone) {
+                    // Note: phone is already set from OTP, don't override
+                  }
+                }}
+                onDeleteAddress={savedAddresses.deleteAddress}
+                onSetDefault={savedAddresses.setAsDefault}
+                onAddNew={() => setSelectedAddressId(undefined)}
+                loading={savedAddresses.loading}
+              />
+            )}
+
+            <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 12, color: "#111827", marginTop: 16 }}>
+              {selectedAddressId ? "Edit Address" : "Enter Address"}
+            </h3>
             <Field label="Full Name *" value={name} onChange={setName} placeholder="Rahul Sharma" />
             <Field label="Email" value={email} onChange={setEmail} placeholder="rahul@example.com" type="email" />
             <Field label="Address Line 1 *" value={address1} onChange={setAddress1} placeholder="House / Flat / Building" />
@@ -596,10 +639,72 @@ export default function CheckoutPage() {
               </div>
             )}
 
+            {/* Save address option for returning customers */}
+            {customer && customer.totalOrders > 0 && (
+              <div style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                background: "#f9fafb",
+                border: "1px solid #e5e7eb",
+                borderRadius: 8,
+                padding: 12,
+                marginBottom: 16,
+              }}>
+                <input
+                  type="checkbox"
+                  id="save-address"
+                  checked={showSaveAddress}
+                  onChange={e => setShowSaveAddress(e.target.checked)}
+                  style={{ width: 18, height: 18, cursor: "pointer" }}
+                />
+                <label htmlFor="save-address" style={{ flex: 1, fontSize: 13, color: "#374151", cursor: "pointer" }}>
+                  Save this address for next time
+                </label>
+              </div>
+            )}
+
+            {showSaveAddress && (
+              <input
+                type="text"
+                placeholder="Label (e.g., Home, Office)"
+                value={addressLabel}
+                onChange={e => setAddressLabel(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: 10,
+                  border: "1px solid #d1d5db",
+                  borderRadius: 6,
+                  fontSize: 14,
+                  marginBottom: 16,
+                }}
+              />
+            )}
+
             {errorMsg && <ErrorText msg={errorMsg} />}
-            <Btn onClick={() => {
+            <Btn onClick={async () => {
               if (!name || !address1 || !city || !state || !pincode) { setErrorMsg("Please fill all required fields"); return }
               setErrorMsg("")
+
+              // Save address if checkbox is checked
+              if (showSaveAddress && customer?.customerId) {
+                const saved = await savedAddresses.saveAddress({
+                  name,
+                  phone,
+                  address1,
+                  address2,
+                  city,
+                  state,
+                  pincode,
+                  label: addressLabel || undefined,
+                  isDefault: false,
+                })
+                if (!saved) {
+                  setErrorMsg("Failed to save address")
+                  return
+                }
+              }
+
               setStep("payment")
             }} color={brandPrimaryColor}>
               Continue to Payment
