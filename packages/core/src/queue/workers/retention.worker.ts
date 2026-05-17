@@ -1,6 +1,6 @@
 import { Worker, type Job } from "bullmq"
 import { db } from "@d2c/database"
-import { createRedisConnection } from "../redis"
+import { createRedisConnection, getRedis } from "../redis"
 import { queueCommunication } from "../queues"
 import type { RetentionJobData } from "../queues"
 import { getCustomerMemory, decideRetention, CalendarAgent } from "../../agents"
@@ -199,7 +199,8 @@ async function processShop(shopId: string, job: Job<RetentionJobData>) {
     )
 
     // Queue comms for stage changes — using Decision Agent
-    const calendar = new CalendarAgent()
+    const redis = getRedis()
+    const calendar = new CalendarAgent(redis)
 
     for (const u of updates) {
       if (!u.phone) continue
@@ -212,7 +213,7 @@ async function processShop(shopId: string, job: Job<RetentionJobData>) {
         lifecycleStage: u.lifecycleStage,
         churnScore: u.churnScore,
         daysSinceLastOrder: u.lifecycleStage === "new" ? 0 :
-          Math.floor((Date.now() - (memory.lastOrderDate?.getTime() || Date.now())) / 86_400_000),
+          Math.floor((Date.now() - (memory.lastOrderAt?.getTime() || Date.now())) / 86_400_000),
         avgOrderValue: memory.avgOrderValue,
       })
 
@@ -280,8 +281,8 @@ async function processShop(shopId: string, job: Job<RetentionJobData>) {
         await calendar.recordSent(u.id, "marketing")
         totalComms++
       } else if (decision.action === "silence_90d") {
-        // Set a hold on marketing comms
-        await calendar.hold(u.id, "Silent period for customer", new Date(Date.now() + 90 * 86_400_000))
+        // Set a hold on marketing comms for 90 days
+        await calendar.hold(u.id, 90 * 86_400_000, "Silent period for customer")
       }
     }
 

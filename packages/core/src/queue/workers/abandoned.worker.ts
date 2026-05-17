@@ -221,7 +221,7 @@ async function processSession(sessionId: string): Promise<void> {
       // The session will be re-picked up by the next sweep
     }
 
-    return { skipped: true, reason: "orchestrator_blocked", detail: orchestratorDecision.reason }
+    return
   }
 
   // 5. Communication Agent — generate personalised message
