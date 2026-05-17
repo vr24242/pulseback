@@ -1,6 +1,6 @@
 {
-  "buildCommand": "cd ../.. && npm run build --filter=@d2c/customer-pwa",
-  "outputDirectory": "apps/customer-pwa/dist",
+  "buildCommand": "npm run build --filter=@d2c/customer-pwa",
+  "outputDirectory": "dist",
   "headers": [
     {
       "source": "/service-worker.js",
