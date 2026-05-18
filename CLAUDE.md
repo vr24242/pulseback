@@ -1104,6 +1104,7 @@ async function handleEvent(customerId) {
 - **Phase 3.2** ✅ — Merchant PWA (exception queue, dashboard, deployed)
 - **Phase 5** ✅ — Multi-Agent Orchestration (CORE + INTEGRATION + SUBAGENTS COMPLETE)
 - **SUBAGENT FRAMEWORK** ✅ — Complete background workflow system (all 5 types, 13 instances)
+- **Marketing Site** ✅ — Premium SaaS marketing site with design system, 12+ sections, deployed to Vercel
 
 ### In Progress
 - ⏳ Testing Phase 3 PWAs (needed before production)
@@ -1125,6 +1126,16 @@ async function handleEvent(customerId) {
    - Learning loop collecting decision outcomes for future pattern analysis
 7. Updated CLAUDE.md master checklist with complete Phase 5 details
 8. All code committed and schema pushed to production database
+9. **Built premium Pulseback marketing site** (Next.js 14, Tailwind, custom design system)
+   - 12+ strategic sections showcasing 7 domain agents and system capabilities
+   - Reusable component library (Button, Card, Eyebrow, Chip, TopNav, Footer)
+   - Comprehensive design system with CSS custom properties
+   - SEO-optimized with metadata, canonical URLs, sitemap
+10. **Deployed marketing site to Vercel**
+   - Production: https://pulseback-marketing-9tv66kwva-varun-raos-projects.vercel.app
+   - Aliased: https://pulseback-marketing.vercel.app
+   - Configured monorepo root vercel.json for proper dependency resolution
+   - Auto-deployment on GitHub pushes to main branch
 
 ### Critical Path to Production
 1. ✅ **DONE:** Wire 4 critical workers into orchestrator (abandoned, ndr, retention, winback)
