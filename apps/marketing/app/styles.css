@@ -89,6 +89,18 @@
 
   /* Topbar */
   --topbar-h: 72px;
+
+  /* Gradients */
+  --gradient-hero: linear-gradient(135deg, #dcef8a 0%, #2696b0 50%, #6b4fe5 100%);
+  --gradient-blue-green: linear-gradient(135deg, #2563ff 0%, #00cc76 100%);
+  --gradient-purple-pink: linear-gradient(135deg, #6b4fe5 0%, #e55baa 100%);
+  --gradient-warm: linear-gradient(135deg, #e0b14a 0%, #e55baa 100%);
+  --gradient-cool: linear-gradient(135deg, #2696b0 0%, #2563ff 100%);
+
+  /* 3D Effects */
+  --perspective: 1000px;
+  --transform-3d: perspective(1000px) rotateX(5deg) rotateY(-5deg);
+  --shadow-3d: 0 20px 40px rgba(11, 31, 26, 0.2), 0 40px 80px rgba(11, 31, 26, 0.1);
 }
 
 /* === GLOBAL === */
@@ -486,6 +498,111 @@ textarea:focus-visible,
 /* === DARK MODE (future) === */
 @media (prefers-color-scheme: dark) {
   /* Override light-mode defaults here when dark mode is ready */
+}
+
+/* === 3D ANIMATIONS === */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px) rotateZ(-2deg);
+  }
+  50% {
+    transform: translateY(-20px) rotateZ(2deg);
+  }
+}
+
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(220, 239, 138, 0.3), var(--shadow-3d);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(220, 239, 138, 0.6), var(--shadow-3d);
+  }
+}
+
+@keyframes gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes slide-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-40px) rotateY(10deg);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) rotateY(0);
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(40px) rotateY(-10deg);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) rotateY(0);
+  }
+}
+
+@keyframes scale-pop {
+  0% {
+    transform: scale(0.8) rotateZ(-5deg);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1) rotateZ(0deg);
+    opacity: 1;
+  }
+}
+
+/* === EFFECT CLASSES === */
+.pb-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.pb-glow {
+  animation: glow-pulse 2s ease-in-out infinite;
+  border-radius: var(--r-2xl);
+}
+
+.pb-gradient-animated {
+  background-size: 200% 200%;
+  animation: gradient-shift 6s ease infinite;
+}
+
+.pb-3d-card {
+  transform: perspective(1000px) rotateX(5deg) rotateY(-5deg);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: var(--shadow-3d);
+}
+
+.pb-3d-card:hover {
+  transform: perspective(1000px) rotateX(0deg) rotateY(0deg) translateZ(20px);
+  box-shadow: 0 40px 80px rgba(11, 31, 26, 0.3);
+}
+
+.pb-slide-in-left {
+  animation: slide-in-left 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.pb-slide-in-right {
+  animation: slide-in-right 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.pb-scale-pop {
+  animation: scale-pop 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 /* === UTILITIES === */

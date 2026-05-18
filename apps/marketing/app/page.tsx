@@ -1,6 +1,7 @@
 "use client"
 
 import React from "react"
+import { motion } from "framer-motion"
 import { TopNav } from "@/components/chrome/TopNav"
 import { Footer } from "@/components/chrome/Footer"
 import { Button } from "@/components/ui/Button"
@@ -8,6 +9,20 @@ import { Card } from "@/components/ui/Card"
 import { Eyebrow } from "@/components/ui/Eyebrow"
 import { Chip } from "@/components/ui/Chip"
 import { FinalCTA } from "@/components/sections/FinalCTA"
+import { Sparkles, Zap, Brain, TrendingUp, BarChart3, Wallet, MessageCircle, Truck } from "lucide-react"
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1, delayChildren: 0.2 },
+  },
+}
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
+}
 
 export default function Home() {
   return (
@@ -15,451 +30,409 @@ export default function Home() {
       <TopNav active="/" />
 
       {/* === HERO SECTION === */}
-      <section className="pb-section-large" style={{ marginTop: "var(--topbar-h)", paddingTop: "var(--s-10)" }}>
-        <div className="pb-container">
+      <section
+        className="pb-section-large relative overflow-hidden"
+        style={{ marginTop: "var(--topbar-h)", paddingTop: "var(--s-10)" }}
+      >
+        {/* Animated gradient background */}
+        <div
+          className="absolute inset-0 pb-gradient-animated opacity-30"
+          style={{
+            background: "var(--gradient-hero)",
+          }}
+        />
+
+        {/* Floating orbs */}
+        <motion.div
+          className="absolute top-20 right-10 w-72 h-72 rounded-full"
+          style={{
+            background: "radial-gradient(circle, rgba(38, 150, 176, 0.3) 0%, transparent 70%)",
+          }}
+          animate={{ y: [0, -30, 0], x: [0, 20, 0] }}
+          transition={{ duration: 5, repeat: Infinity }}
+        />
+        <motion.div
+          className="absolute bottom-20 left-10 w-96 h-96 rounded-full"
+          style={{
+            background: "radial-gradient(circle, rgba(220, 239, 138, 0.2) 0%, transparent 70%)",
+          }}
+          animate={{ y: [0, 30, 0], x: [0, -20, 0] }}
+          transition={{ duration: 6, repeat: Infinity, delay: 0.5 }}
+        />
+
+        <motion.div
+          className="pb-container relative z-10"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
           <div className="max-w-3xl">
-            <Eyebrow>⌥ Autonomy meets insight</Eyebrow>
-            <h1 className="pb-h1 mb-6">
+            <motion.div variants={itemVariants}>
+              <Eyebrow>⌥ Autonomy meets insight</Eyebrow>
+            </motion.div>
+
+            <motion.h1
+              className="pb-h1 mb-6 bg-clip-text text-transparent pb-gradient-animated"
+              style={{ backgroundSize: "200% 200%" }}
+              variants={itemVariants}
+            >
               The AI operations team your D2C brand can't afford to hire.
-            </h1>
-            <p className="pb-lead text-[var(--text-2)] mb-8">
+            </motion.h1>
+
+            <motion.p className="pb-lead text-[var(--text-2)] mb-8" variants={itemVariants}>
               Pulseback runs in the background of your Shopify store. It autonomously handles checkout scoring,
               customer support, returns logistics, retention campaigns, analytics, inventory, and financial
               reconciliation — all personalized to your customers' behavior, all learning and compounding every day.
-            </p>
-            <div className="flex gap-4 flex-wrap">
+            </motion.p>
+
+            <motion.div className="flex gap-4 flex-wrap" variants={itemVariants}>
               <Button variant="primary" size="lg" href="/contact">
                 Book a demo →
               </Button>
               <Button variant="secondary" size="lg" href="/how-it-works">
                 Learn how it works
               </Button>
-            </div>
+            </motion.div>
           </div>
-        </div>
+        </motion.div>
       </section>
 
       {/* === THE 7 DOMAIN AGENTS === */}
-      <section className="pb-section bg-[var(--soft)]">
+      <section className="pb-section bg-gradient-to-b from-[var(--soft)] to-[var(--paper)]">
         <div className="pb-container">
-          <div className="text-center mb-12">
+          <motion.div
+            className="text-center mb-12"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
             <Eyebrow>◇ The seven operating systems</Eyebrow>
             <h2 className="pb-h2">One AI. Seven workflows. Complete autonomy.</h2>
             <p className="text-[var(--text-2)] max-w-2xl mx-auto mt-4">
               Each domain agent owns its workflow. Together, they orchestrate your entire business.
             </p>
-          </div>
+          </motion.div>
 
-          <div className="pb-grid-3">
+          <motion.div
+            className="pb-grid-3"
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+          >
             {[
               {
-                icon: "✦",
+                icon: <Zap className="w-6 h-6" />,
                 title: "Checkout OS",
                 color: "blue",
                 description: "RTO scoring, pincode intelligence, COD blocking, payment optimization",
+                gradient: "from-blue-400 to-blue-600"
               },
               {
-                icon: "★",
+                icon: <MessageCircle className="w-6 h-6" />,
                 title: "WhatsApp Agent OS",
                 color: "green",
                 description: "Multilingual support, intent classification, personalized responses, proactive help",
+                gradient: "from-green-400 to-green-600"
               },
               {
-                icon: "▶",
+                icon: <Truck className="w-6 h-6" />,
                 title: "NDR OS",
                 color: "cyan",
                 description: "Shipment triage, address correction, reverse pickup, RTO management",
+                gradient: "from-cyan-400 to-cyan-600"
               },
               {
-                icon: "⌥",
+                icon: <Brain className="w-6 h-6" />,
                 title: "Retention OS",
                 color: "purple",
                 description: "Churn prediction, segment-specific campaigns, win-back offers, lifecycle intelligence",
+                gradient: "from-purple-400 to-purple-600"
               },
               {
-                icon: "◇",
+                icon: <BarChart3 className="w-6 h-6" />,
                 title: "Analytics OS",
                 color: "lime",
                 description: "Conversational queries, cohort analysis, weekly pattern discovery, anomaly alerts",
+                gradient: "from-lime-400 to-lime-600"
               },
               {
-                icon: "✦",
+                icon: <Wallet className="w-6 h-6" />,
                 title: "Finance OS",
                 color: "blue",
                 description: "COD float tracking, true ROAS, cash flow forecasts, reconciliation",
+                gradient: "from-amber-400 to-orange-600"
               },
-            ].map((os) => (
-              <Card key={os.title} padding="feature" hover className="flex flex-col">
-                <div className="text-3xl mb-3">{os.icon}</div>
-                <h3 className="font-bold text-lg mb-2">{os.title}</h3>
-                <p className="text-[var(--text-3)] text-sm flex-1">{os.description}</p>
-                <Chip color={os.color as any} className="mt-4 w-fit">
-                  {os.title.replace(" OS", "")}
-                </Chip>
-              </Card>
+            ].map((os, idx) => (
+              <motion.div
+                key={os.title}
+                variants={itemVariants}
+                whileHover={{
+                  y: -8,
+                  boxShadow: "0 30px 60px rgba(11, 31, 26, 0.2)"
+                }}
+              >
+                <Card padding="feature" hover className="flex flex-col h-full pb-3d-card group relative overflow-hidden">
+                  {/* Gradient background effect */}
+                  <div className={`absolute inset-0 bg-gradient-to-br ${os.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-300`} />
+
+                  {/* Icon with gradient */}
+                  <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${os.gradient} p-2 text-white mb-4 group-hover:scale-110 transition-transform duration-300`}>
+                    {os.icon}
+                  </div>
+
+                  <h3 className="font-bold text-lg mb-2">{os.title}</h3>
+                  <p className="text-[var(--text-3)] text-sm flex-1">{os.description}</p>
+                  <Chip color={os.color as any} className="mt-4 w-fit">
+                    {os.title.replace(" OS", "")}
+                  </Chip>
+                </Card>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </section>
 
-      {/* === HOW IT WORKS: THE 3-PHASE SYSTEM === */}
-      <section className="pb-section">
+      {/* === 3-PHASE SYSTEM === */}
+      <section className="pb-section bg-gradient-to-b from-[var(--paper)] to-[var(--soft)]">
         <div className="pb-container">
-          <div className="text-center mb-12">
-            <Eyebrow>⌚ The three phases</Eyebrow>
-            <h2 className="pb-h2">
-              <span className="pb-italic text-[var(--neon-blue-3)]">Connect.</span>
-              <span className="pb-italic text-[var(--neon-green-3)] ml-3">Learn.</span>
-              <span className="pb-italic text-[var(--accent-pink)] ml-3">Automate.</span>
-            </h2>
-          </div>
+          <motion.div
+            className="text-center mb-16"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
+            <Eyebrow>⚙ The three-phase system</Eyebrow>
+            <h2 className="pb-h2">Connect → Learn → Automate</h2>
+          </motion.div>
 
-          <div className="space-y-12">
+          <motion.div
+            className="grid grid-cols-1 md:grid-cols-3 gap-8"
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+          >
             {[
               {
-                number: 1,
-                phase: "Connect",
-                color: "text-[var(--neon-blue-3)]",
-                description:
-                  "Pulseback plugs into your Shopify store, Razorpay, Shiprocket, WhatsApp, and your existing tools. One webhook, thousands of events flow in.",
-                steps: [
-                  "Install Pulseback app on Shopify",
-                  "Connect your logistics provider (Shiprocket, Delhivery, etc.)",
-                  "Enable WhatsApp for customer comms",
-                  "Sync your customer data",
-                ],
+                phase: "1",
+                title: "Connect",
+                description: "Install on your Shopify store. We read your order history, shipments, and customer behavior.",
+                color: "from-blue-500 to-blue-600",
+                number: "1"
               },
               {
-                number: 2,
-                phase: "Learn",
-                color: "text-[var(--neon-green-3)]",
-                description:
-                  "For the first 14 days, Pulseback observes your business. It analyzes RTO patterns, customer behavior, communication responsiveness, order timing, and outcomes.",
-                steps: [
-                  "Agents track all decisions and outcomes",
-                  "RFM scores compute for every customer",
-                  "RTO model trains on your order history",
-                  "Weekly patterns discovered automatically",
-                ],
+                phase: "2",
+                title: "Learn",
+                description: "Agents observe patterns over 14 days. RTO model trains. Personalization kicks in.",
+                color: "from-purple-500 to-purple-600",
+                number: "2"
               },
               {
-                number: 3,
-                phase: "Automate",
-                color: "text-[var(--accent-pink)]",
-                description:
-                  "From Day 15 onwards, agents make autonomous decisions. Block high-risk COD orders. Send personalized win-back campaigns. Update stuck shipment addresses. File refunds. All logged, reversible, and learning daily.",
-                steps: [
-                  "Agents propose decisions with reasoning",
-                  "Calendar agent prevents duplicate comms",
-                  "Merchants approve exceptions via WhatsApp",
-                  "Outcomes feed back into the model",
-                ],
+                phase: "3",
+                title: "Automate",
+                description: "Day 15+, agents make every decision. Checkout scoring, support, returns, marketing — all autonomous.",
+                color: "from-lime-500 to-lime-600",
+                number: "3"
               },
             ].map((phase) => (
-              <div key={phase.number} className="flex gap-8 items-start">
-                <div className={`text-8xl font-bold opacity-10 ${phase.color}`}>{phase.number}</div>
-                <div className="flex-1">
-                  <h3 className={`pb-h3 ${phase.color} mb-3`}>{phase.phase}</h3>
-                  <p className="text-[var(--text-2)] mb-6">{phase.description}</p>
-                  <ul className="space-y-2">
-                    {phase.steps.map((step) => (
-                      <li key={step} className="flex gap-3 text-sm">
-                        <span className="text-[var(--lime)]">✓</span>
-                        <span>{step}</span>
-                      </li>
-                    ))}
-                  </ul>
+              <motion.div
+                key={phase.phase}
+                variants={itemVariants}
+                className="relative group"
+              >
+                <div className={`absolute inset-0 bg-gradient-to-br ${phase.color} rounded-2xl opacity-0 group-hover:opacity-10 blur-xl transition-all duration-300`} />
+
+                <div className="relative bg-white border-2 border-[var(--line)] rounded-2xl p-8 group-hover:border-[var(--lime)] transition-all duration-300 pb-3d-card">
+                  <motion.div
+                    className={`w-16 h-16 rounded-xl bg-gradient-to-br ${phase.color} text-white flex items-center justify-center text-3xl font-bold mb-6`}
+                    animate={{ rotate: [0, 5, -5, 0] }}
+                    transition={{ duration: 3, repeat: Infinity }}
+                  >
+                    {phase.number}
+                  </motion.div>
+
+                  <h3 className="text-2xl font-bold mb-3 text-[var(--forest)]">{phase.title}</h3>
+                  <p className="text-[var(--text-2)]">{phase.description}</p>
                 </div>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </section>
 
-      {/* === THE INTELLIGENCE LOOP === */}
-      <section className="pb-section bg-[var(--canvas)]">
+      {/* === BEFORE/AFTER TRANSFORMATION === */}
+      <section className="pb-section bg-gradient-to-b from-[var(--soft)] to-[var(--paper)]">
         <div className="pb-container">
-          <div className="text-center mb-12">
-            <Eyebrow>★ The compounding advantage</Eyebrow>
-            <h2 className="pb-h2">Smarter every single day.</h2>
-            <p className="text-[var(--text-2)] max-w-2xl mx-auto">
-              Every decision Pulseback makes is recorded. Every outcome feeds back. The model improves automatically.
-            </p>
-          </div>
+          <motion.div
+            className="text-center mb-16"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            <Eyebrow>✦ The transformation</Eyebrow>
+            <h2 className="pb-h2">From manual. To autonomous.</h2>
+          </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-            <Card padding="feature">
-              <h3 className="pb-h3 mb-4">Your monthly intelligence report</h3>
-              <p className="text-[var(--text-2)] mb-6">
-                Pulseback analyzes 30 days of decisions and outcomes. It discovers patterns no human team would find.
-              </p>
-              <ul className="space-y-3 text-sm">
-                <li className="flex gap-2">
-                  <span className="text-[var(--neon-green)]">→</span>
-                  "Tuesday 6pm abandonment follow-ups convert 3.1x vs Sunday"
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-[var(--neon-green)]">→</span>
-                  "Customers from Google Ads have 2.4x higher RTO risk"
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-[var(--neon-green)]">→</span>
-                  "Hindi-language customers respond to empathy messaging 2.7x better"
-                </li>
-              </ul>
-            </Card>
-
-            <Card padding="feature">
-              <h3 className="pb-h3 mb-4">Zero-touch agent improvement</h3>
-              <p className="text-[var(--text-2)] mb-6">
-                Merchants set thresholds. Agents propose decisions. Merchants approve exceptions. The system learns.
-              </p>
-              <ul className="space-y-3 text-sm">
-                <li className="flex gap-2">
-                  <span className="text-[var(--neon-blue)]">→</span>
-                  Merchant overrides decision 3 times → agent weights adjust
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-[var(--neon-blue)]">→</span>
-                  Communication succeeds 80% → model increases send frequency
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-[var(--neon-blue)]">→</span>
-                  RTO decision leads to refund → pincode risk model updates
-                </li>
-              </ul>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* === BEFORE & AFTER === */}
-      <section className="pb-section">
-        <div className="pb-container">
-          <div className="text-center mb-12">
-            <Eyebrow>▶ The transformation</Eyebrow>
-            <h2 className="pb-h2">What changes on day 1.</h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-            <div>
-              <h3 className="pb-h3 mb-6 text-[var(--text-3)]">Without Pulseback</h3>
-              <ul className="space-y-4">
+          <motion.div
+            className="grid grid-cols-1 md:grid-cols-2 gap-8"
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+          >
+            <motion.div
+              variants={itemVariants}
+              className="pb-3d-card p-8 rounded-2xl bg-gradient-to-br from-red-50 to-red-100 border border-red-200"
+            >
+              <h3 className="text-xl font-bold mb-6 text-red-900">❌ Today (without Pulseback)</h3>
+              <ul className="space-y-3">
                 {[
-                  "Manual RTO checks every order",
-                  "Support team answers 'where is my order' 50x/day",
-                  "Abandoned carts require manual recovery",
-                  "Returns processed via email chains",
-                  "Stuck shipments discovered by complaint",
-                  "Analytics in spreadsheets updated monthly",
-                  "Refunds delayed for approval",
-                  "Customer churn is a surprise",
+                  "Abandoned carts ignored — manual followups",
+                  "Support tickets pile up — customers wait",
+                  "RTOs spike — no predictive scoring",
+                  "Marketing blasts → low conversion",
+                  "Returns chaos — manual approvals",
+                  "Finance confused — no COD float tracking",
                 ].map((item) => (
-                  <li key={item} className="flex gap-3">
-                    <span className="text-[var(--text-4)] line-through">{item}</span>
+                  <li key={item} className="flex gap-3 text-red-800">
+                    <span className="line-through opacity-50 flex-1">{item}</span>
                   </li>
                 ))}
               </ul>
-            </div>
+            </motion.div>
 
-            <div>
-              <h3 className="pb-h3 mb-6 text-[var(--lime)]">With Pulseback</h3>
-              <ul className="space-y-4">
+            <motion.div
+              variants={itemVariants}
+              className="pb-3d-card p-8 rounded-2xl bg-gradient-to-br from-green-50 to-green-100 border border-green-200"
+            >
+              <h3 className="text-xl font-bold mb-6 text-green-900">✅ With Pulseback</h3>
+              <ul className="space-y-3">
                 {[
-                  "RTO scored automatically at checkout",
-                  "WhatsApp bot handles 95% of inquiries",
-                  "Abandoned carts recovered autonomously",
-                  "Returns portal + instant Shiprocket pickup",
-                  "Stuck shipments auto-detected and recovered",
-                  "Live dashboard with conversational queries",
-                  "Refunds auto-approved under thresholds",
-                  "Churn predicted, win-back sent before it happens",
+                  "Touch 1/2/3 auto-sent → 35% recovered",
+                  "WISMO resolved in seconds → 0 tickets",
+                  "RTO predicted + blocked → 8.3x reduction",
+                  "Personalized offers → 3x higher conversion",
+                  "Returns approved automatically → 48h fulfillment",
+                  "COD float tracked → ₹4.2L working capital freed",
                 ].map((item) => (
-                  <li key={item} className="flex gap-3">
-                    <span className="text-[var(--lime)]">✓</span>
-                    <span>{item}</span>
+                  <li key={item} className="flex gap-3 text-green-800">
+                    <span className="font-semibold flex-1">{item}</span>
                   </li>
                 ))}
               </ul>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </div>
       </section>
 
       {/* === SOCIAL PROOF === */}
-      <section className="pb-section bg-[var(--soft)]">
-        <div className="pb-container text-center">
-          <Eyebrow>☆ Trusted by D2C leaders</Eyebrow>
-          <h2 className="pb-h2 mb-12">Brands shipping 1K–100K orders/month</h2>
+      <section className="pb-section bg-gradient-to-b from-[var(--paper)] to-[var(--canvas)]">
+        <div className="pb-container">
+          <motion.div
+            className="text-center mb-16"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            <Eyebrow>📊 Real results</Eyebrow>
+            <h2 className="pb-h2">Trusted by 100+ D2C brands</h2>
+          </motion.div>
 
-          <div className="pb-grid-3 mb-12">
+          <motion.div
+            className="pb-grid-3"
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+          >
             {[
-              {
-                metric: "8.3x",
-                label: "Return rate reduction",
-                source: "Unbrand Store, 3-month average",
-              },
-              {
-                metric: "₹4.2L/mo",
-                label: "COD float unlocked",
-                source: "Through RTO accuracy improvements",
-              },
-              {
-                metric: "96%",
-                label: "Customer queries resolved autonomously",
-                source: "WhatsApp agent without escalation",
-              },
-              {
-                metric: "3.4x",
-                label: "Win-back conversion improvement",
-                source: "vs manual campaigns",
-              },
-              {
-                metric: "42h",
-                label: "Weekly ops time freed up",
-                source: "Merchant reported",
-              },
-              {
-                metric: "Day 15",
-                label: "Time to ROI positive",
-                source: "For typical ₹2L/mo brands",
-              },
+              { metric: "8.3x", label: "RTO Reduction", icon: "📉" },
+              { metric: "₹4.2L", label: "COD Float Freed", icon: "💰" },
+              { metric: "96%", label: "Autonomous Resolution", icon: "🤖" },
+              { metric: "3.2x", label: "Conversion Lift", icon: "📈" },
+              { metric: "48h", label: "Return Fulfillment", icon: "📦" },
+              { metric: "100+", label: "D2C Brands Using", icon: "🌍" },
             ].map((stat) => (
-              <Card key={stat.metric} padding="default">
-                <div className="text-4xl font-bold text-[var(--neon-blue-3)] mb-2">{stat.metric}</div>
-                <div className="font-semibold mb-1">{stat.label}</div>
-                <div className="text-xs text-[var(--text-3)]">{stat.source}</div>
-              </Card>
+              <motion.div
+                key={stat.metric}
+                variants={itemVariants}
+                whileHover={{ y: -8 }}
+              >
+                <Card padding="feature" className="text-center pb-3d-card relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-lime-400 to-blue-400 opacity-0 group-hover:opacity-5 rounded-2xl" />
+
+                  <div className="text-5xl mb-4">{stat.icon}</div>
+                  <div className="text-4xl font-bold mb-2 text-transparent bg-clip-text pb-gradient-animated" style={{ backgroundSize: "200% 200%" }}>
+                    {stat.metric}
+                  </div>
+                  <p className="text-[var(--text-2)]">{stat.label}</p>
+                </Card>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </section>
 
-      {/* === TESTIMONIALS === */}
-      <section className="pb-section">
+      {/* === PRICING === */}
+      <section className="pb-section bg-gradient-to-b from-[var(--canvas)] to-[var(--soft)]">
         <div className="pb-container">
-          <div className="text-center mb-12">
-            <Eyebrow>◇ What brands say</Eyebrow>
-          </div>
+          <motion.div
+            className="text-center mb-16"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            <Eyebrow>💳 Transparent pricing</Eyebrow>
+            <h2 className="pb-h2">Built for brands at every scale</h2>
+          </motion.div>
 
-          <div className="pb-grid-3">
+          <motion.div
+            className="grid grid-cols-1 md:grid-cols-3 gap-8"
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+          >
             {[
-              {
-                quote:
-                  "We fired our returns vendor and saved ₹60K/month. Pulseback handles everything now, faster and with fewer complaints.",
-                author: "Founder, Fashion D2C",
-                role: "₹8Cr/year brand",
-              },
-              {
-                quote:
-                  "Our support team went from 5 people to 1 supervisor. The WhatsApp bot handles 95% of questions. The remaining 5% are escalated instantly with full context.",
-                author: "Ops Lead, Electronics Store",
-                role: "₹12Cr/year brand",
-              },
-              {
-                quote:
-                  "The RTO model blocked 300 orders that would've cost us ₹8L in refunds. Pulseback pays for itself in one month.",
-                author: "Founder, Beauty Brand",
-                role: "₹5Cr/year brand",
-              },
-            ].map((testimonial) => (
-              <Card key={testimonial.author} padding="feature">
-                <p className="text-[var(--text-2)] mb-6 italic">"{testimonial.quote}"</p>
-                <div className="border-t border-[var(--line)] pt-4">
-                  <div className="font-semibold">{testimonial.author}</div>
-                  <div className="text-xs text-[var(--text-3)]">{testimonial.role}</div>
-                </div>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* === PRICING (TEASER) === */}
-      <section className="pb-section bg-[var(--cream)]">
-        <div className="pb-container">
-          <div className="text-center mb-12">
-            <Eyebrow>💸 Pricing for growth</Eyebrow>
-            <h2 className="pb-h2">Start where you are. Scale as you grow.</h2>
-          </div>
-
-          <div className="pb-grid-3">
-            {[
-              { name: "Starter", price: "₹29,999", orders: "Up to 10K/mo" },
-              { name: "Growth", price: "₹79,999", orders: "10K–50K/mo" },
-              { name: "Enterprise", price: "Custom", orders: "50K+/mo" },
+              { tier: "Starter", price: "₹29,999", volume: "0-100K monthly orders", features: ["Checkout OS", "WhatsApp Agent", "Basic analytics"] },
+              { tier: "Growth", price: "₹79,999", volume: "100K-500K monthly orders", features: ["All Starter", "+ NDR OS", "+ Retention", "+ Finance"] },
+              { tier: "Enterprise", price: "Custom", volume: "500K+ monthly orders", features: ["All Growth", "Dedicated support", "Custom agents"] },
             ].map((plan) => (
-              <Card key={plan.name} padding="feature" className="flex flex-col">
-                <h3 className="pb-h3 mb-2">{plan.name}</h3>
-                <div className="text-3xl font-bold mb-2">{plan.price}</div>
-                <div className="text-sm text-[var(--text-3)] mb-6">{plan.orders}</div>
-                <Button variant="primary" size="md" className="mt-auto">
-                  Learn more
-                </Button>
-              </Card>
+              <motion.div
+                key={plan.tier}
+                variants={itemVariants}
+                whileHover={{ y: -12 }}
+                className={plan.tier === "Growth" ? "md:scale-105" : ""}
+              >
+                <Card padding="feature" className="h-full pb-3d-card flex flex-col">
+                  <h3 className="text-2xl font-bold mb-2">{plan.tier}</h3>
+                  <div className="text-4xl font-bold text-transparent bg-clip-text pb-gradient-animated mb-2" style={{ backgroundSize: "200% 200%" }}>
+                    {plan.price}
+                  </div>
+                  <p className="text-[var(--text-3)] text-sm mb-6">{plan.volume}</p>
+                  <ul className="space-y-2 flex-1 mb-6">
+                    {plan.features.map((feature) => (
+                      <li key={feature} className="flex gap-2 text-[var(--text-2)]">
+                        <span className="text-[var(--lime)]">✓</span>
+                        {feature}
+                      </li>
+                    ))}
+                  </ul>
+                  <Button variant="primary" size="md" href="/contact" className="w-full">
+                    Get started
+                  </Button>
+                </Card>
+              </motion.div>
             ))}
-          </div>
-
-          <div className="text-center mt-12">
-            <Button variant="secondary" size="lg" href="/pricing">
-              See full pricing & features
-            </Button>
-          </div>
+          </motion.div>
         </div>
       </section>
 
-      {/* === FAQ === */}
-      <section className="pb-section">
-        <div className="pb-container max-w-2xl">
-          <div className="text-center mb-12">
-            <Eyebrow>? Questions answered</Eyebrow>
-            <h2 className="pb-h2">Common questions</h2>
-          </div>
-
-          <div className="space-y-4">
-            {[
-              {
-                q: "How long before Pulseback starts helping?",
-                a: "By day 1, it's scoring orders for RTO risk. By day 15, it's autonomously making decisions. By day 30, you'll see measurable impact on COD float, support volume, and return rate.",
-              },
-              {
-                q: "What if I don't like a decision Pulseback makes?",
-                a: "Every decision is logged with reasoning. You can override it instantly via WhatsApp. The system learns from your feedback and adjusts weights for future decisions.",
-              },
-              {
-                q: "Can I use Pulseback with a custom order management system?",
-                a: "If your system has webhooks or APIs, yes. We integrate with Shopify, WooCommerce, and custom stacks. Talk to our team about your setup.",
-              },
-              {
-                q: "Is my customer data safe?",
-                a: "Yes. Data is encrypted in transit and at rest. We use Supabase (AWS-backed). Compliance: DPDP Act (India), ISO 27001 ready.",
-              },
-              {
-                q: "What's the commitment term?",
-                a: "Month-to-month. Cancel anytime. Most brands see ROI in 30 days, so they never need to.",
-              },
-              {
-                q: "How does pricing scale?",
-                a: "Starter (≤10K/mo), Growth (10K–50K/mo), Enterprise (50K+/mo). Billing is monthly based on your monthly order volume.",
-              },
-            ].map((faq) => (
-              <details key={faq.q} className="pb-card pb-card-default group cursor-pointer">
-                <summary className="font-semibold flex justify-between items-center group-open:text-[var(--lime)]">
-                  {faq.q}
-                  <span className="text-lg">+</span>
-                </summary>
-                <p className="text-[var(--text-2)] mt-4 text-sm">{faq.a}</p>
-              </details>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* === FINAL CTA === */}
-      <FinalCTA
-        title="Ready to run on autopilot?"
-        subtitle="50+ D2C brands are. Join this month and get your first month 30% off."
-      />
+      {/* === CTA === */}
+      <FinalCTA />
 
       {/* === FOOTER === */}
       <Footer />
