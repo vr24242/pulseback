@@ -45,12 +45,13 @@ export default function Home() {
     <main>
       {/* Nav */}
       <nav style={{ padding: "24px 48px", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #222" }}>
-        <span style={{ fontSize: 20, fontWeight: 700, letterSpacing: -0.5 }}>D2C OS</span>
+        <a href="/" style={{ fontSize: 20, fontWeight: 700, letterSpacing: -0.5, textDecoration: "none", color: "#fff" }}>D2C OS</a>
         <div style={{ display: "flex", gap: 32, alignItems: "center" }}>
           <a href="/pricing" style={{ color: "#888", textDecoration: "none", fontSize: 14 }}>Pricing</a>
+          <a href="/case-studies" style={{ color: "#888", textDecoration: "none", fontSize: 14 }}>Case Studies</a>
           <a href="/docs" style={{ color: "#888", textDecoration: "none", fontSize: 14 }}>Docs</a>
           <a
-            href="https://apps.shopify.com"
+            href="/early-access"
             style={{
               background: "#fff",
               color: "#000",
@@ -61,7 +62,7 @@ export default function Home() {
               fontWeight: 600,
             }}
           >
-            Install on Shopify
+            Join Early Access
           </a>
         </div>
       </nav>
@@ -80,7 +81,7 @@ export default function Home() {
           automates, and optimises every step of their journey. No duct tape between 6 tools.
         </p>
         <a
-          href="https://apps.shopify.com"
+          href="/early-access"
           style={{
             display: "inline-block",
             background: "#fff",
@@ -92,7 +93,7 @@ export default function Home() {
             fontWeight: 700,
           }}
         >
-          Install Free on Shopify →
+          Join 500+ Early Adopters →
         </a>
       </section>
 
@@ -146,13 +147,13 @@ export default function Home() {
       {/* CTA */}
       <section style={{ padding: "120px 48px", textAlign: "center", borderTop: "1px solid #111" }}>
         <h2 style={{ fontSize: 56, fontWeight: 800, letterSpacing: -1.5, margin: "0 0 24px" }}>
-          Start in 2 minutes.
+          We're building in public.
         </h2>
         <p style={{ color: "#666", fontSize: 18, marginBottom: 48 }}>
-          Install the app. Every customer interaction is automated from day one.
+          Join our early access program. Be one of the first to automate your entire business.
         </p>
         <a
-          href="https://apps.shopify.com"
+          href="/early-access"
           style={{
             display: "inline-block",
             background: "#fff",
@@ -164,7 +165,7 @@ export default function Home() {
             fontWeight: 700,
           }}
         >
-          Install on Shopify — Free
+          Get Early Access — Free Beta
         </a>
       </section>
 

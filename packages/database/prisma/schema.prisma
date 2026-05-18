@@ -986,3 +986,60 @@ model AgentFeedback {
   @@index([createdAt])
   @@map("agent_feedback")
 }
+
+// ─────────────────────────────────────────────────────────────
+// EARLY ADOPTER — Marketing Site Signup & Waitlist
+// ─────────────────────────────────────────────────────────────
+// Tracks early adopter signups for marketing site.
+// Used for waitlist queue, referral tracking, beta onboarding.
+model EarlyAdopter {
+  id              String    @id @default(cuid())
+  email           String    @unique
+  companyName     String
+  productCategory String
+  shopifyStore    String
+  expectedOrders  Int
+  referralCode    String    @unique @default(cuid())
+  referralCount   Int       @default(0)
+  referredBy      String?   // Email of referrer
+  rank            Int?      // Position in waitlist (updated when referrals move them up)
+  status          String    @default("waitlist") // waitlist | approved | onboarded | churned
+  signupSource    String?   // "organic" | "referral" | "ads"
+
+  // Email tracking
+  lastEmailAt     DateTime?
+  emailsSent      Int       @default(0)
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  referrals       EarlyAdopter[] @relation("Referrals")
+  referredByUser  EarlyAdopter? @relation("Referrals", fields: [referredBy], references: [email])
+
+  @@index([email])
+  @@index([status])
+  @@index([rank])
+  @@index([referralCode])
+  @@index([createdAt])
+  @@map("early_adopters")
+}
+
+// ─────────────────────────────────────────────────────────────
+// EMAIL LOG — Track Marketing Email Sends
+// ─────────────────────────────────────────────────────────────
+// For monitoring email delivery and bounce rates.
+model EmailLog {
+  id        String   @id @default(cuid())
+  email     String
+  type      String   // signup_confirmation | weekly_rank | referral_bonus | onboarding_ready
+  status    String   // sent | failed | bounced | opened | clicked
+  messageId String?  // Resend message ID for tracking
+  createdAt DateTime @default(now())
+
+  @@index([email])
+  @@index([type])
+  @@index([status])
+  @@index([createdAt])
+  @@map("email_logs")
+}
