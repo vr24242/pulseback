@@ -1,0 +1,5 @@
+{
+  "buildCommand": "npm --prefix apps/marketing run build",
+  "outputDirectory": "apps/marketing/.next",
+  "framework": "nextjs"
+}
