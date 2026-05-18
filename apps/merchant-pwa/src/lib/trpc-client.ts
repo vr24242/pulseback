@@ -1,7 +1,6 @@
 import { httpBatchLink } from "@trpc/client"
 import superjson from "superjson"
 import { getToken } from "./auth.js"
-import type { AppRouter } from "@d2c/api"
 import { trpc } from "./trpc.js"
 
 /**

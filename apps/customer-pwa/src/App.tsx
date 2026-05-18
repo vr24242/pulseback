@@ -40,7 +40,7 @@ export default function App() {
 
             {/* Protected routes */}
             <Route
-              path="/track/:orderId"
+              path="/track/:orderName"
               element={
                 <ProtectedRoute>
                   <TrackOrder />
@@ -64,8 +64,8 @@ export default function App() {
               }
             />
 
-            {/* Default redirect */}
-            <Route path="/" element={<Navigate to="/auth" replace />} />
+            {/* Default redirect - preserve JWT in query params */}
+            <Route path="/" element={<Auth />} />
           </Routes>
         </trpc.Provider>
       </QueryClientProvider>

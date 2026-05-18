@@ -1,12 +1,31 @@
-import { useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { useState, useEffect } from "react"
+import { useNavigate, useParams } from "react-router-dom"
 import { useOrder, useCheckReturn } from "@/hooks/useCustomer.js"
+import { decodeToken } from "@/lib/auth.js"
 
 export default function TrackOrder() {
   const navigate = useNavigate()
+  const { orderName: paramOrderName } = useParams<{ orderName: string }>()
   const [orderName, setOrderName] = useState("")
   const [phone, setPhone] = useState("")
   const [submitted, setSubmitted] = useState(false)
+
+  // When component mounts, check if we have JWT with order info
+  useEffect(() => {
+    const token = localStorage.getItem("tracking_token")
+    if (token && paramOrderName) {
+      try {
+        const payload = decodeToken(token)
+        if (payload?.orderName && payload?.phone) {
+          setOrderName(payload.orderName)
+          setPhone(payload.phone)
+          setSubmitted(true)
+        }
+      } catch {
+        // Ignore decode errors, user will enter manually
+      }
+    }
+  }, [paramOrderName])
 
   const { data: order, isLoading, error } = useOrder(orderName, phone)
   const { data: returnStatus } = useCheckReturn(orderName)
@@ -125,7 +144,7 @@ export default function TrackOrder() {
   }
 
   return (
-    <div style={{ padding: "20px", maxWidth: "600px", margin: "0 auto" }}>
+    <div style={{ padding: "20px", maxWidth: "600px", margin: "0 auto" }} data-testid="track-order-page">
       {/* Header */}
       <div className="card mb-4">
         <button
@@ -149,7 +168,7 @@ export default function TrackOrder() {
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
           <div>
             <p className="text-sm text-gray-600">Status</p>
-            <p className={`badge ${getStatusBadge(order.status)}`}>{order.status}</p>
+            <p className={`badge ${getStatusBadge(order.status)}`} data-testid="status-badge">{order.status}</p>
           </div>
           <div>
             <p className="text-sm text-gray-600">Total</p>
@@ -166,14 +185,15 @@ export default function TrackOrder() {
         )}
       </div>
 
-      {/* Shipments */}
+      {/* Timeline / Shipments */}
       {order.shipments && order.shipments.length > 0 && (
-        <div className="card mb-4">
-          <h2 className="font-bold mb-4">Shipment Details</h2>
+        <div className="card mb-4" data-testid="timeline">
+          <h2 className="font-bold mb-4">Shipment Timeline</h2>
 
           {order.shipments.map((shipment: any) => (
             <div
               key={shipment.id}
+              data-testid="timeline-event"
               style={{
                 borderLeft: "4px solid #000",
                 paddingLeft: "16px",
@@ -182,10 +202,10 @@ export default function TrackOrder() {
             >
               <p className="text-sm text-gray-600">AWB: {shipment.awb}</p>
               <p className="font-bold mb-2">
-                {shipment.carrier} — <span className={`badge ${getStatusBadge(shipment.status)}`}>{shipment.status}</span>
+                {shipment.carrier} — <span className={`badge ${getStatusBadge(shipment.status)}`} data-testid="event-status">{shipment.status}</span>
               </p>
               {shipment.lastScannedAt && (
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-600" data-testid="event-timestamp">
                   Last updated: {formatDate(shipment.lastScannedAt)}
                 </p>
               )}
@@ -201,17 +221,17 @@ export default function TrackOrder() {
 
       {/* Returns Section */}
       {returnStatus && (
-        <div className="card mb-4">
+        <div className="card mb-4" data-testid="return-section">
           <h2 className="font-bold mb-4">Returns</h2>
           {returnStatus.eligible ? (
             <>
-              <p className="text-sm mb-4">This order is eligible for return. You have 7 days from delivery.</p>
+              <p className="text-sm mb-4" data-testid="return-eligible">This order is eligible for return. You have 7 days from delivery.</p>
               <button
                 className="btn btn-primary"
                 onClick={() => navigate("/returns")}
                 style={{ width: "100%" }}
               >
-                Initiate Return
+                Return Item
               </button>
             </>
           ) : (

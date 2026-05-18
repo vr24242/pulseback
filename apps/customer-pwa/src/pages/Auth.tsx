@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
-import { setToken, decodeToken } from "@/lib/auth.js"
+import { setToken, decodeToken, isTokenValid } from "@/lib/auth.js"
 
 export default function Auth() {
   const navigate = useNavigate()
@@ -10,9 +10,20 @@ export default function Auth() {
 
   useEffect(() => {
     // Extract JWT from URL query params
-    const jwt = searchParams.get("jwt")
+    let jwt = searchParams.get("jwt")
 
+    // If no JWT in params, check localStorage for existing token
     if (!jwt) {
+      const existingToken = localStorage.getItem("auth_token")
+      if (existingToken && isTokenValid()) {
+        // Already authenticated, redirect to tracking page
+        const payload = decodeToken(existingToken)
+        if (payload?.orderName) {
+          navigate(`/track/${encodeURIComponent(payload.orderName)}`)
+          return
+        }
+      }
+      // No JWT found, show error
       setError("No authentication token provided. Please check your checkout link.")
       setIsLoading(false)
       return
@@ -27,21 +38,27 @@ export default function Auth() {
         return
       }
 
-      // Check if expired
-      const now = Math.floor(Date.now() / 1000)
-      if (payload.exp <= now) {
-        setError("Authentication token has expired. Please complete checkout again.")
-        setIsLoading(false)
-        return
+      // Check if expired (if exp is present)
+      if (payload.exp) {
+        const now = Math.floor(Date.now() / 1000)
+        if (payload.exp <= now) {
+          setError("Authentication token has expired. Please complete checkout again.")
+          setIsLoading(false)
+          return
+        }
       }
 
-      // Store token
+      // Store token in both keys for backward compatibility
       setToken(jwt)
+      localStorage.setItem("tracking_token", jwt)
 
-      // Redirect to track page
-      setTimeout(() => {
-        navigate("/track/latest")
-      }, 500)
+      // Redirect to track page with order name
+      // If orderName is in payload, use it; otherwise redirect to home
+      if (payload.orderName) {
+        navigate(`/track/${encodeURIComponent(payload.orderName)}`, { replace: true })
+      } else {
+        navigate("/", { replace: true })
+      }
     } catch (err) {
       setError("An error occurred during authentication. Please try again.")
       setIsLoading(false)

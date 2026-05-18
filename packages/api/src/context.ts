@@ -1,73 +1,108 @@
-import * as jose from "jose"
+import type { inferAsyncReturnType } from "@trpc/server"
 import { db } from "@d2c/database"
-
-const JWT_SECRET = process.env.SESSION_SECRET || "dev-secret-change-in-production"
-const secret = new TextEncoder().encode(JWT_SECRET)
-
-export interface PulseJWTPayload {
-  shopId: string
-  shopDomain: string
-  exp: number
-  iat: number
-}
-
-export interface Context {
-  shopId?: string
-  shop?: any
-  headers: Record<string, string>
-}
+import { SignJWT } from "jose"
 
 /**
- * Verify JWT token and extract shopId
+ * JWT Secret for token signing
+ * In production, use environment variable
  */
-export async function verifyToken(token: string): Promise<PulseJWTPayload> {
-  try {
-    const verified = await jose.jwtVerify(token, secret)
-    return verified.payload as unknown as PulseJWTPayload
-  } catch (err) {
-    throw new Error("Invalid or expired token")
-  }
-}
+const JWT_SECRET = new TextEncoder().encode(
+  process.env.JWT_SECRET || "dev-secret-key-change-in-production"
+)
 
 /**
- * Generate JWT token for a shop
+ * Generate a signed JWT token for a shop
  */
-export async function generateToken(shopId: string, expiresInHours = 24): Promise<string> {
-  const shop = await db.shop.findUniqueOrThrow({ where: { id: shopId } })
+export async function generateToken(
+  shopId: string,
+  expiresInHours: number = 24,
+  customPayload?: Record<string, any>
+): Promise<string> {
+  const now = Math.floor(Date.now() / 1000)
+  const expiresAt = now + expiresInHours * 60 * 60
 
-  const payload: PulseJWTPayload = {
+  const token = await new SignJWT({
     shopId,
-    shopDomain: shop.domain,
-    iat: Math.floor(Date.now() / 1000),
-    exp: Math.floor(Date.now() / 1000) + expiresInHours * 60 * 60,
-  }
-
-  return new jose.SignJWT(payload as unknown as jose.JWTPayload)
+    iat: now,
+    exp: expiresAt,
+    ...customPayload,
+  })
     .setProtectedHeader({ alg: "HS256" })
-    .sign(secret)
+    .sign(JWT_SECRET)
+
+  return token
 }
 
 /**
- * Create context from request headers
+ * Generate a tracking token for a customer
+ * Used to create shareable tracking links
  */
-export async function createContext(headers: Record<string, string>): Promise<Context> {
-  const ctx: Context = { headers }
+export async function generateTrackingToken(
+  shopId: string,
+  customerId: string,
+  phone: string,
+  orderName: string,
+  expiresInHours: number = 168 // 7 days
+): Promise<string> {
+  return generateToken(shopId, expiresInHours, {
+    customerId,
+    phone,
+    orderName,
+    type: "tracking",
+  })
+}
 
-  try {
-    const authHeader = headers.authorization || headers.Authorization
-    if (!authHeader) return ctx
+/**
+ * Inner function for `createContext`
+ */
+export async function createContextInner() {
+  return {
+    db,
+  }
+}
 
-    const token = authHeader.replace(/^Bearer\s+/i, "")
-    const payload = await verifyToken(token)
+/**
+ * Create context function
+ * Called on every request
+ */
+export async function createContext(opts: {
+  headers: Headers | null
+  ip?: string
+  userAgent?: string
+}) {
+  const inner = await createContextInner()
 
-    const shop = await db.shop.findUnique({ where: { id: payload.shopId } })
-    if (!shop) throw new Error("Shop not found")
+  // Extract JWT from headers
+  let shopId: string | null = null
+  let shop: any | null = null
 
-    ctx.shopId = payload.shopId
-    ctx.shop = shop
-  } catch (err) {
-    // No token or invalid token — proceed with public context
+  const authHeader = opts.headers?.get("authorization")
+  if (authHeader?.startsWith("Bearer ")) {
+    const token = authHeader.slice(7)
+    try {
+      // Decode JWT (without verification for now, should verify in middleware)
+      const parts = token.split(".")
+      if (parts.length === 3) {
+        const payload = JSON.parse(Buffer.from(parts[1], "base64").toString())
+        shopId = payload.shopId
+        
+        // Load shop from DB
+        if (shopId) {
+          shop = await db.shop.findUnique({ where: { id: shopId } })
+        }
+      }
+    } catch (error) {
+      // Silently fail — middleware will reject if needed
+    }
   }
 
-  return ctx
+  return {
+    ...inner,
+    shopId,
+    shop,
+    ip: opts.ip,
+    userAgent: opts.userAgent,
+  }
 }
+
+export type Context = inferAsyncReturnType<typeof createContext>

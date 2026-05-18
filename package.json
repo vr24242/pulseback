@@ -14,13 +14,21 @@
     "db:push": "cd packages/database && npx prisma db push",
     "db:migrate": "cd packages/database && npx prisma migrate dev",
     "db:studio": "cd packages/database && npx prisma studio",
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "test:debug": "playwright test --debug",
+    "test:headed": "playwright test --headed",
+    "test:report": "playwright show-report",
+    "test:e2e:customer": "playwright test customer-pwa.spec.ts",
+    "test:e2e:merchant": "playwright test merchant-pwa.spec.ts",
     "clean": "turbo clean && rm -rf node_modules"
   },
   "devDependencies": {
     "turbo": "^2.0.0",
     "typescript": "^5.4.0",
     "@types/node": "^20.0.0",
-    "prettier": "^3.0.0"
+    "prettier": "^3.0.0",
+    "@playwright/test": "^1.45.0"
   },
   "engines": {
     "node": ">=20.0.0"

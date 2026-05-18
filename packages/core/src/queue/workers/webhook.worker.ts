@@ -2,6 +2,7 @@ import { Worker, type Job } from "bullmq"
 import { db } from "@d2c/database"
 import { createRedisConnection } from "../redis"
 import { queueCommunication } from "../queues"
+import { generateTrackingUrl } from "../../utils/tokens"
 import type { WebhookJobData } from "../queues"
 
 // ─── Shopify Payload Types ────────────────────────────────────────────────────
@@ -241,13 +242,27 @@ async function handleOrderCreate(
     const templateName = isCOD ? "cod_confirmation" : "order_confirmed"
     const triggerType = isCOD ? "order.placed.cod" : "order.placed.prepaid"
 
+    // Generate tracking URL for customer
+    let trackingUrl = ""
+    try {
+      trackingUrl = await generateTrackingUrl(
+        shopId,
+        customer.id,
+        normalizedPhone,
+        order.name,
+        process.env.CUSTOMER_PWA_URL ?? "https://pulseback.app"
+      )
+    } catch (err) {
+      job.log(`Warning: Failed to generate tracking URL: ${err}`)
+    }
+
     await queueCommunication({
       shopId,
       customerId: customer.id,
       phone: normalizedPhone,
       channel: "whatsapp",
       templateName,
-      bodyParams: [customerName, order.name, amount],
+      bodyParams: [customerName, order.name, amount, trackingUrl],
       triggerType,
       triggerRef: newOrder.id,
       priority: "high",

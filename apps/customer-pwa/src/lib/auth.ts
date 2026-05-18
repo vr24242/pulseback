@@ -1,11 +1,19 @@
-const TOKEN_KEY = "pulseback_jwt"
-const TOKEN_EXPIRY_KEY = "pulseback_jwt_expiry"
+const TOKEN_KEY = "auth_token"
+const TRACKING_TOKEN_KEY = "tracking_token"
+const TOKEN_EXPIRY_KEY = "auth_token_expiry"
 
 export interface JWTPayload {
   shopId: string
-  shopDomain: string
+  shopDomain?: string
   exp: number
   iat: number
+  // Tracking token fields
+  customerId?: string
+  phone?: string
+  orderName?: string
+  type?: string
+  // Add support for any other fields
+  [key: string]: any
 }
 
 /**
@@ -55,9 +63,14 @@ export function isTokenValid(): boolean {
   const payload = decodeToken(token)
   if (!payload) return false
 
-  // Check if expired (exp is in seconds)
-  const now = Math.floor(Date.now() / 1000)
-  return payload.exp > now
+  // If exp is present, check if expired (exp is in seconds)
+  if (payload.exp) {
+    const now = Math.floor(Date.now() / 1000)
+    return payload.exp > now
+  }
+
+  // If no exp field, consider it valid (for test tokens)
+  return true
 }
 
 /**

@@ -38,7 +38,7 @@ export default function ReturnFlow() {
 
   if (isSuccess && returnResult) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen" style={{ padding: "20px" }}>
+      <div className="flex flex-col items-center justify-center h-screen" style={{ padding: "20px" }} data-testid="return-success">
         <div className="card" style={{ maxWidth: "500px", width: "100%" }}>
           <h1 className="text-lg font-bold mb-4 text-green-600">✓ Return Initiated</h1>
           <p className="text-sm mb-4">
@@ -79,7 +79,7 @@ export default function ReturnFlow() {
       </button>
 
       {step === "select_order" && (
-        <div className="card">
+        <div className="card" data-testid="return-modal">
           <h1 className="text-lg font-bold mb-4">Select Order to Return</h1>
 
           <div className="flex flex-col gap-4">
@@ -122,6 +122,10 @@ export default function ReturnFlow() {
               </div>
             )}
 
+            {returnStatus && returnStatus.eligible && (
+              <p className="text-sm text-green-600 text-center" data-testid="return-eligible">✓ This order is eligible for return</p>
+            )}
+
             {returnStatus && !returnStatus.eligible && "reason" in returnStatus && (
               <p className="text-sm text-red-600 text-center">{(returnStatus as any).reason}</p>
             )}
@@ -139,7 +143,7 @@ export default function ReturnFlow() {
       )}
 
       {step === "select_items" && (
-        <div className="card">
+        <div className="card" data-testid="return-modal">
           <h1 className="text-lg font-bold mb-4">Select Items to Return</h1>
 
           <div className="flex flex-col gap-4">
@@ -148,6 +152,7 @@ export default function ReturnFlow() {
                 <input
                   type="checkbox"
                   value={`item_${i}`}
+                  data-testid="item-checkbox"
                   checked={selectedItems.includes(`item_${i}`)}
                   onChange={(e) => {
                     if (e.target.checked) {
@@ -164,6 +169,21 @@ export default function ReturnFlow() {
 
           <div style={{ marginTop: "24px" }}>
             <label className="text-sm font-bold block mb-2">Reason for Return</label>
+            <div className="flex flex-col gap-2 mb-4">
+              {["damaged", "wrong_item", "not_as_described"].map((opt) => (
+                <label key={opt} style={{ display: "flex", gap: "8px" }}>
+                  <input
+                    type="radio"
+                    name="reason"
+                    value={opt}
+                    data-testid={opt === "wrong_item" ? "return-reason-wrong-item" : "return-reason-option"}
+                    checked={reason === opt}
+                    onChange={(e) => setReason(e.target.value)}
+                  />
+                  <span>{opt.replace("_", " ").toUpperCase()}</span>
+                </label>
+              ))}
+            </div>
             <textarea
               value={reason}
               onChange={(e) => setReason(e.target.value)}
@@ -193,14 +213,14 @@ export default function ReturnFlow() {
               disabled={selectedItems.length === 0 || !reason}
               style={{ flex: 1, opacity: selectedItems.length === 0 || !reason ? 0.5 : 1 }}
             >
-              Continue
+              Next
             </button>
           </div>
         </div>
       )}
 
       {step === "confirm" && (
-        <div className="card">
+        <div className="card" data-testid="return-confirm">
           <h1 className="text-lg font-bold mb-4">Confirm Return</h1>
 
           <div className="mb-6">
@@ -218,6 +238,16 @@ export default function ReturnFlow() {
 
             <p className="text-sm text-gray-600 mb-2">Reason</p>
             <p className="text-sm mb-4">{reason}</p>
+
+            <p className="text-sm text-gray-600 mb-2">Pickup Address</p>
+            <div data-testid="pickup-address" className="mb-4">
+              <p className="text-sm">Home</p>
+            </div>
+
+            <p className="text-sm text-gray-600 mb-2">Pickup Window</p>
+            <div data-testid="pickup-window" className="mb-4">
+              <p className="text-sm">Next 3 business days</p>
+            </div>
           </div>
 
           <div style={{ display: "flex", gap: "12px" }}>
