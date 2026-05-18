@@ -1092,7 +1092,7 @@ async function handleEvent(customerId) {
 
 ---
 
-## Phase Summary & Status (as of May 17, 2026)
+## Phase Summary & Status (as of May 18, 2026)
 
 ### Completed Phases
 - **Phase 0** ✅ — Infrastructure (BullMQ, Shopify webhooks, checkout portal)
@@ -1102,20 +1102,11 @@ async function handleEvent(customerId) {
 - **Phase 3.0** ✅ — tRPC Foundation (merchant + customer routers, auth, rate limiting)
 - **Phase 3.1** ✅ — Customer PWA (tracking, returns, reorder, deployed)
 - **Phase 3.2** ✅ — Merchant PWA (exception queue, dashboard, deployed)
+- **Phase 5** ✅ — Multi-Agent Orchestration (CORE + INTEGRATION + SUBAGENTS COMPLETE)
+- **SUBAGENT FRAMEWORK** ✅ — Complete background workflow system (all 5 types, 13 instances)
 
 ### In Progress
-- **Phase 5** 🔨 — Multi-Agent Orchestration (CORE + INTEGRATION COMPLETE)
-  - ✅ Orchestrator built (decision bus, conflict resolution, rule engine)
-  - ✅ Learning Loop built (outcome tracking, metrics, pattern analysis)
-  - ✅ Database schema deployed (AgentDecision, LearningOutcome, AgentFeedback)
-  - ✅ Integration examples created (shows how to wire workers)
-  - ✅ **Phase 5.2 COMPLETE:** All 4 critical workers wired into orchestrator
-    - ✅ communication-v2.worker (template + implementation)
-    - ✅ abandoned.worker (cart recovery with orchestrator)
-    - ✅ ndr.worker (logistics decisions with high priority)
-    - ✅ retention.worker (lifecycle-based retention with medium priority)
-    - ✅ winback.worker (win-back campaigns with low priority)
-  - ⏳ Testing Phase 3 PWAs (needed before production)
+- ⏳ Testing Phase 3 PWAs (needed before production)
 
 ### Not Yet Started
 - **Phase 4** — Web Surfaces & Stakeholder Apps (analytics, ops, logistics portals)

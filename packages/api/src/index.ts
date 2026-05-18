@@ -7,60 +7,18 @@
  * - merchant: authenticated merchant endpoints (orders, customers, exceptions, approvals)
  */
 
-import { initTRPC } from "@trpc/server"
-import { ZodError } from "zod"
-import type { Context } from "./context"
-import { merchantRouter } from "./routers/merchant"
-import { customerRouter } from "./routers/customer"
-import { authRouter } from "./routers/auth"
-import { healthRouter } from "./routers/health"
+// Use the shared tRPC instance from trpc.ts
+import { router, publicProcedure, procedure } from "./trpc.js"
+export { t } from "./trpc.js"
+import { merchantRouter } from "./routers/merchant.js"
+import { customerRouter } from "./routers/customer.js"
+import { authRouter } from "./routers/auth.js"
+import { healthRouter } from "./routers/health.js"
 
 /**
- * Create tRPC instance
+ * Root router - combines all domain routers
  */
-const t = initTRPC.context<Context>().create({
-  errorFormatter({ shape, error }) {
-    return {
-      ...shape,
-      data: {
-        ...shape.data,
-        zodError: error.cause instanceof ZodError ? error.cause.flatten() : null,
-      },
-    }
-  },
-})
-
-/**
- * Export tRPC utilities for use in middleware
- */
-export { t }
-
-/**
- * Middleware setup
- */
-import { loggingMiddleware } from "./middleware/logging"
-import { rateLimitMiddleware } from "./middleware/rate-limit"
-
-/**
- * Procedure types
- */
-export const router = t.router
-export const publicProcedure = t.procedure
-  .use(loggingMiddleware)
-  .use(rateLimitMiddleware)
-
-/**
- * Protected procedures (requires valid JWT)
- */
-import { authMiddleware } from "./middleware/auth"
-
-export const protectedProcedure = publicProcedure
-  .use(authMiddleware)
-
-/**
- * Root router
- */
-export const appRouter = t.router({
+export const appRouter = router({
   // Public endpoints (no auth required)
   health: healthRouter,
   auth: authRouter,
@@ -73,6 +31,7 @@ export const appRouter = t.router({
 export type AppRouter = typeof appRouter
 
 /**
- * Export context type for use in middleware/resolvers
+ * Export tRPC utilities and context type for use in consumers
  */
-export type { Context } from "./context"
+export { router, publicProcedure, procedure }
+export type { Context } from "./context.js"

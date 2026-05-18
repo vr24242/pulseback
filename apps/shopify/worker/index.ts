@@ -10,15 +10,16 @@
  *     worker = "node build/worker/index.js"
  */
 
-import { startWebhookWorker }       from "@d2c/core/queue/webhook.worker"
-import { startCommunicationWorker } from "@d2c/core/queue/communication.worker"
-import { startTrackingWorker }      from "@d2c/core/queue/tracking.worker"
-import { startNdrWorker }           from "@d2c/core/queue/ndr.worker"
-import { startAbandonedWorker }     from "@d2c/core/queue/abandoned.worker"
-import { startRetentionWorker }     from "@d2c/core/queue/retention.worker"
-import { startWinbackWorker }       from "@d2c/core/queue/winback.worker"
-import { startBriefingWorker }      from "@d2c/core/queue/briefing.worker"
-import { registerRepeatableJobs }   from "@d2c/core/queue/scheduler"
+import { startWebhookWorker }           from "@d2c/core/queue"
+import { startCommunicationWorker }     from "@d2c/core/queue"
+import { startTrackingWorker }          from "@d2c/core/queue"
+import { startNdrWorker }               from "@d2c/core/queue"
+import { startAbandonedWorker }         from "@d2c/core/queue"
+import { startRetentionWorker }         from "@d2c/core/queue"
+import { startWinbackWorker }           from "@d2c/core/queue"
+import { startBriefingWorker }          from "@d2c/core/queue"
+import { initSubagentsWorker, scheduleSubagentsOrchestrator } from "@d2c/core/queue"
+import { registerRepeatableJobs }       from "@d2c/core/queue"
 
 async function main() {
   console.log("🚀 PulseOS Worker starting...")
@@ -30,18 +31,22 @@ async function main() {
 
   // Start all workers
   const workers = [
-    startWebhookWorker(),       // Shopify webhooks        — concurrency 10, priority queue
-    startCommunicationWorker(), // WhatsApp/SMS sends      — concurrency 30
-    startTrackingWorker(),      // Shiprocket polling      — concurrency 5, every 15min
-    startNdrWorker(),           // Stuck shipment recovery — concurrency 3, every 1hr
-    startAbandonedWorker(),     // Cart recovery           — concurrency 5, every 5min
-    startRetentionWorker(),     // Customer RFM scoring    — concurrency 2, daily 10am IST
-    startWinbackWorker(),       // Lapsed re-engagement    — concurrency 2, daily 11am IST
-    startBriefingWorker(),      // 9pm merchant briefing   — concurrency 3, daily 9pm IST
+    startWebhookWorker(),           // Shopify webhooks        — concurrency 10, priority queue
+    startCommunicationWorker(),     // WhatsApp/SMS sends      — concurrency 30
+    startTrackingWorker(),          // Shiprocket polling      — concurrency 5, every 15min
+    startNdrWorker(),               // Stuck shipment recovery — concurrency 3, every 1hr
+    startAbandonedWorker(),         // Cart recovery           — concurrency 5, every 5min
+    startRetentionWorker(),         // Customer RFM scoring    — concurrency 2, daily 10am IST
+    startWinbackWorker(),           // Lapsed re-engagement    — concurrency 2, daily 11am IST
+    startBriefingWorker(),          // 9pm merchant briefing   — concurrency 3, daily 9pm IST
+    initSubagentsWorker(),          // Subagent orchestrator   — every 5 minutes
   ]
 
   // Register repeatable schedules (replaces cron-job.org)
   await registerRepeatableJobs()
+
+  // Schedule the subagents orchestrator to run every 5 minutes
+  await scheduleSubagentsOrchestrator()
 
   console.log(`✅ ${workers.length} workers running. Schedules registered.\n`)
   console.log("   webhook       → concurrency 10  · event-driven")
@@ -52,6 +57,7 @@ async function main() {
   console.log("   retention     → concurrency 2   · daily 10am IST")
   console.log("   winback       → concurrency 2   · daily 11am IST")
   console.log("   briefing      → concurrency 3   · daily 9pm IST")
+  console.log("   subagents     → orchestrator    · every 5 min (manages background workflows)")
 
   // Graceful shutdown
   process.on("SIGTERM", async () => {

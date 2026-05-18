@@ -1,11 +1,11 @@
-import { t } from "../index"
+import { t } from "../trpc.js"
 import { TRPCError } from "@trpc/server"
 
 /**
  * Authentication middleware
  * Validates JWT and ensures shopId is present
  */
-export const authMiddleware = t.middleware(async ({ ctx, next }) => {
+export const authMiddleware = t.middleware(async ({ ctx, next }: any) => {
   if (!ctx.shopId || !ctx.shop) {
     throw new TRPCError({
       code: "UNAUTHORIZED",

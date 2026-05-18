@@ -1,182 +1,468 @@
-const REPLACES = [
-  { tool: "GoKwik", what: "Smart checkout" },
-  { tool: "Bitespeed", what: "WhatsApp automation" },
-  { tool: "Klaviyo", what: "Email/SMS lifecycle" },
-  { tool: "Gorgias", what: "Customer support" },
-  { tool: "Triple Whale", what: "Analytics" },
-  { tool: "AfterShip", what: "Shipping intelligence" },
-]
+"use client"
 
-const FEATURES = [
-  {
-    title: "Checkout OS",
-    description:
-      "Identity captured the moment they enter their phone. RTO scoring, COD intelligence, pre-fill for returning customers. Converts better, ships better.",
-  },
-  {
-    title: "Communication OS",
-    description:
-      "WhatsApp-first automation. Abandoned cart recovery, order updates, shipping alerts — all triggered by real events, never batch blasts.",
-  },
-  {
-    title: "Support OS",
-    description:
-      "Claude handles 80% of tickets. WISMO, returns, cancels — resolved instantly, with full customer context. No more 'what's your order number?'",
-  },
-  {
-    title: "Retention OS",
-    description:
-      "Churn score updated daily. Repurchase windows predicted per customer. Win-backs triggered before you even notice they're gone.",
-  },
-  {
-    title: "Marketing OS",
-    description:
-      "Server-side Meta CAPI events. Accurate attribution, better lookalikes, smart suppression. Your ad spend works 30% harder.",
-  },
-  {
-    title: "Merchant AI",
-    description:
-      "Ask anything in plain English. 'Who are my at-risk customers?' 'What's my RTO rate this month?' Claude answers with live data.",
-  },
-]
+import React from "react"
+import { TopNav } from "@/components/chrome/TopNav"
+import { Footer } from "@/components/chrome/Footer"
+import { Button } from "@/components/ui/Button"
+import { Card } from "@/components/ui/Card"
+import { Eyebrow } from "@/components/ui/Eyebrow"
+import { Chip } from "@/components/ui/Chip"
+import { FinalCTA } from "@/components/sections/FinalCTA"
 
 export default function Home() {
   return (
-    <main>
-      {/* Nav */}
-      <nav style={{ padding: "24px 48px", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #222" }}>
-        <a href="/" style={{ fontSize: 20, fontWeight: 700, letterSpacing: -0.5, textDecoration: "none", color: "#fff" }}>D2C OS</a>
-        <div style={{ display: "flex", gap: 32, alignItems: "center" }}>
-          <a href="/pricing" style={{ color: "#888", textDecoration: "none", fontSize: 14 }}>Pricing</a>
-          <a href="/case-studies" style={{ color: "#888", textDecoration: "none", fontSize: 14 }}>Case Studies</a>
-          <a href="/docs" style={{ color: "#888", textDecoration: "none", fontSize: 14 }}>Docs</a>
-          <a
-            href="/early-access"
-            style={{
-              background: "#fff",
-              color: "#000",
-              padding: "8px 20px",
-              borderRadius: 8,
-              textDecoration: "none",
-              fontSize: 14,
-              fontWeight: 600,
-            }}
-          >
-            Join Early Access
-          </a>
-        </div>
-      </nav>
+    <>
+      <TopNav active="/" />
 
-      {/* Hero */}
-      <section style={{ padding: "120px 48px", maxWidth: 960, margin: "0 auto", textAlign: "center" }}>
-        <div style={{ display: "inline-block", background: "#1a1a1a", border: "1px solid #333", borderRadius: 100, padding: "6px 16px", fontSize: 12, color: "#888", marginBottom: 32 }}>
-          Built for D2C brands in India
-        </div>
-        <h1 style={{ fontSize: 72, fontWeight: 800, lineHeight: 1.05, letterSpacing: -2, margin: "0 0 24px" }}>
-          One OS.<br />
-          <span style={{ color: "#888" }}>Replace them all.</span>
-        </h1>
-        <p style={{ fontSize: 20, color: "#888", maxWidth: 600, margin: "0 auto 48px", lineHeight: 1.6 }}>
-          From the moment a customer enters their phone number at checkout — D2C OS captures,
-          automates, and optimises every step of their journey. No duct tape between 6 tools.
-        </p>
-        <a
-          href="/early-access"
-          style={{
-            display: "inline-block",
-            background: "#fff",
-            color: "#000",
-            padding: "16px 40px",
-            borderRadius: 12,
-            textDecoration: "none",
-            fontSize: 16,
-            fontWeight: 700,
-          }}
-        >
-          Join 500+ Early Adopters →
-        </a>
-      </section>
-
-      {/* Replaces */}
-      <section style={{ padding: "80px 48px", borderTop: "1px solid #111", borderBottom: "1px solid #111" }}>
-        <p style={{ textAlign: "center", color: "#555", fontSize: 13, letterSpacing: 2, textTransform: "uppercase", marginBottom: 48 }}>
-          Replaces
-        </p>
-        <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap", maxWidth: 800, margin: "0 auto" }}>
-          {REPLACES.map((r) => (
-            <div
-              key={r.tool}
-              style={{
-                background: "#111",
-                border: "1px solid #222",
-                borderRadius: 12,
-                padding: "16px 24px",
-                textAlign: "center",
-              }}
-            >
-              <p style={{ margin: 0, fontWeight: 700, fontSize: 16 }}>{r.tool}</p>
-              <p style={{ margin: "4px 0 0", color: "#555", fontSize: 12 }}>{r.what}</p>
+      {/* === HERO SECTION === */}
+      <section className="pb-section-large" style={{ marginTop: "var(--topbar-h)", paddingTop: "var(--s-10)" }}>
+        <div className="pb-container">
+          <div className="max-w-3xl">
+            <Eyebrow>⌥ Autonomy meets insight</Eyebrow>
+            <h1 className="pb-h1 mb-6">
+              The AI operations team your D2C brand can't afford to hire.
+            </h1>
+            <p className="pb-lead text-[var(--text-2)] mb-8">
+              Pulseback runs in the background of your Shopify store. It autonomously handles checkout scoring,
+              customer support, returns logistics, retention campaigns, analytics, inventory, and financial
+              reconciliation — all personalized to your customers' behavior, all learning and compounding every day.
+            </p>
+            <div className="flex gap-4 flex-wrap">
+              <Button variant="primary" size="lg" href="/contact">
+                Book a demo →
+              </Button>
+              <Button variant="secondary" size="lg" href="/how-it-works">
+                Learn how it works
+              </Button>
             </div>
-          ))}
+          </div>
         </div>
       </section>
 
-      {/* Features */}
-      <section style={{ padding: "120px 48px", maxWidth: 1100, margin: "0 auto" }}>
-        <h2 style={{ fontSize: 48, fontWeight: 800, letterSpacing: -1, marginBottom: 64 }}>
-          Every Sub-OS.<br />One customer record.
-        </h2>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 24 }}>
-          {FEATURES.map((f) => (
-            <div
-              key={f.title}
-              style={{
-                background: "#111",
-                border: "1px solid #1a1a1a",
-                borderRadius: 16,
-                padding: 32,
-              }}
-            >
-              <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 12 }}>{f.title}</h3>
-              <p style={{ color: "#666", lineHeight: 1.7, fontSize: 14, margin: 0 }}>{f.description}</p>
+      {/* === THE 7 DOMAIN AGENTS === */}
+      <section className="pb-section bg-[var(--soft)]">
+        <div className="pb-container">
+          <div className="text-center mb-12">
+            <Eyebrow>◇ The seven operating systems</Eyebrow>
+            <h2 className="pb-h2">One AI. Seven workflows. Complete autonomy.</h2>
+            <p className="text-[var(--text-2)] max-w-2xl mx-auto mt-4">
+              Each domain agent owns its workflow. Together, they orchestrate your entire business.
+            </p>
+          </div>
+
+          <div className="pb-grid-3">
+            {[
+              {
+                icon: "✦",
+                title: "Checkout OS",
+                color: "blue",
+                description: "RTO scoring, pincode intelligence, COD blocking, payment optimization",
+              },
+              {
+                icon: "★",
+                title: "WhatsApp Agent OS",
+                color: "green",
+                description: "Multilingual support, intent classification, personalized responses, proactive help",
+              },
+              {
+                icon: "▶",
+                title: "NDR OS",
+                color: "cyan",
+                description: "Shipment triage, address correction, reverse pickup, RTO management",
+              },
+              {
+                icon: "⌥",
+                title: "Retention OS",
+                color: "purple",
+                description: "Churn prediction, segment-specific campaigns, win-back offers, lifecycle intelligence",
+              },
+              {
+                icon: "◇",
+                title: "Analytics OS",
+                color: "lime",
+                description: "Conversational queries, cohort analysis, weekly pattern discovery, anomaly alerts",
+              },
+              {
+                icon: "✦",
+                title: "Finance OS",
+                color: "blue",
+                description: "COD float tracking, true ROAS, cash flow forecasts, reconciliation",
+              },
+            ].map((os) => (
+              <Card key={os.title} padding="feature" hover className="flex flex-col">
+                <div className="text-3xl mb-3">{os.icon}</div>
+                <h3 className="font-bold text-lg mb-2">{os.title}</h3>
+                <p className="text-[var(--text-3)] text-sm flex-1">{os.description}</p>
+                <Chip color={os.color as any} className="mt-4 w-fit">
+                  {os.title.replace(" OS", "")}
+                </Chip>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* === HOW IT WORKS: THE 3-PHASE SYSTEM === */}
+      <section className="pb-section">
+        <div className="pb-container">
+          <div className="text-center mb-12">
+            <Eyebrow>⌚ The three phases</Eyebrow>
+            <h2 className="pb-h2">
+              <span className="pb-italic text-[var(--neon-blue-3)]">Connect.</span>
+              <span className="pb-italic text-[var(--neon-green-3)] ml-3">Learn.</span>
+              <span className="pb-italic text-[var(--accent-pink)] ml-3">Automate.</span>
+            </h2>
+          </div>
+
+          <div className="space-y-12">
+            {[
+              {
+                number: 1,
+                phase: "Connect",
+                color: "text-[var(--neon-blue-3)]",
+                description:
+                  "Pulseback plugs into your Shopify store, Razorpay, Shiprocket, WhatsApp, and your existing tools. One webhook, thousands of events flow in.",
+                steps: [
+                  "Install Pulseback app on Shopify",
+                  "Connect your logistics provider (Shiprocket, Delhivery, etc.)",
+                  "Enable WhatsApp for customer comms",
+                  "Sync your customer data",
+                ],
+              },
+              {
+                number: 2,
+                phase: "Learn",
+                color: "text-[var(--neon-green-3)]",
+                description:
+                  "For the first 14 days, Pulseback observes your business. It analyzes RTO patterns, customer behavior, communication responsiveness, order timing, and outcomes.",
+                steps: [
+                  "Agents track all decisions and outcomes",
+                  "RFM scores compute for every customer",
+                  "RTO model trains on your order history",
+                  "Weekly patterns discovered automatically",
+                ],
+              },
+              {
+                number: 3,
+                phase: "Automate",
+                color: "text-[var(--accent-pink)]",
+                description:
+                  "From Day 15 onwards, agents make autonomous decisions. Block high-risk COD orders. Send personalized win-back campaigns. Update stuck shipment addresses. File refunds. All logged, reversible, and learning daily.",
+                steps: [
+                  "Agents propose decisions with reasoning",
+                  "Calendar agent prevents duplicate comms",
+                  "Merchants approve exceptions via WhatsApp",
+                  "Outcomes feed back into the model",
+                ],
+              },
+            ].map((phase) => (
+              <div key={phase.number} className="flex gap-8 items-start">
+                <div className={`text-8xl font-bold opacity-10 ${phase.color}`}>{phase.number}</div>
+                <div className="flex-1">
+                  <h3 className={`pb-h3 ${phase.color} mb-3`}>{phase.phase}</h3>
+                  <p className="text-[var(--text-2)] mb-6">{phase.description}</p>
+                  <ul className="space-y-2">
+                    {phase.steps.map((step) => (
+                      <li key={step} className="flex gap-3 text-sm">
+                        <span className="text-[var(--lime)]">✓</span>
+                        <span>{step}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* === THE INTELLIGENCE LOOP === */}
+      <section className="pb-section bg-[var(--canvas)]">
+        <div className="pb-container">
+          <div className="text-center mb-12">
+            <Eyebrow>★ The compounding advantage</Eyebrow>
+            <h2 className="pb-h2">Smarter every single day.</h2>
+            <p className="text-[var(--text-2)] max-w-2xl mx-auto">
+              Every decision Pulseback makes is recorded. Every outcome feeds back. The model improves automatically.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+            <Card padding="feature">
+              <h3 className="pb-h3 mb-4">Your monthly intelligence report</h3>
+              <p className="text-[var(--text-2)] mb-6">
+                Pulseback analyzes 30 days of decisions and outcomes. It discovers patterns no human team would find.
+              </p>
+              <ul className="space-y-3 text-sm">
+                <li className="flex gap-2">
+                  <span className="text-[var(--neon-green)]">→</span>
+                  "Tuesday 6pm abandonment follow-ups convert 3.1x vs Sunday"
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-[var(--neon-green)]">→</span>
+                  "Customers from Google Ads have 2.4x higher RTO risk"
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-[var(--neon-green)]">→</span>
+                  "Hindi-language customers respond to empathy messaging 2.7x better"
+                </li>
+              </ul>
+            </Card>
+
+            <Card padding="feature">
+              <h3 className="pb-h3 mb-4">Zero-touch agent improvement</h3>
+              <p className="text-[var(--text-2)] mb-6">
+                Merchants set thresholds. Agents propose decisions. Merchants approve exceptions. The system learns.
+              </p>
+              <ul className="space-y-3 text-sm">
+                <li className="flex gap-2">
+                  <span className="text-[var(--neon-blue)]">→</span>
+                  Merchant overrides decision 3 times → agent weights adjust
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-[var(--neon-blue)]">→</span>
+                  Communication succeeds 80% → model increases send frequency
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-[var(--neon-blue)]">→</span>
+                  RTO decision leads to refund → pincode risk model updates
+                </li>
+              </ul>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* === BEFORE & AFTER === */}
+      <section className="pb-section">
+        <div className="pb-container">
+          <div className="text-center mb-12">
+            <Eyebrow>▶ The transformation</Eyebrow>
+            <h2 className="pb-h2">What changes on day 1.</h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+            <div>
+              <h3 className="pb-h3 mb-6 text-[var(--text-3)]">Without Pulseback</h3>
+              <ul className="space-y-4">
+                {[
+                  "Manual RTO checks every order",
+                  "Support team answers 'where is my order' 50x/day",
+                  "Abandoned carts require manual recovery",
+                  "Returns processed via email chains",
+                  "Stuck shipments discovered by complaint",
+                  "Analytics in spreadsheets updated monthly",
+                  "Refunds delayed for approval",
+                  "Customer churn is a surprise",
+                ].map((item) => (
+                  <li key={item} className="flex gap-3">
+                    <span className="text-[var(--text-4)] line-through">{item}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
-          ))}
+
+            <div>
+              <h3 className="pb-h3 mb-6 text-[var(--lime)]">With Pulseback</h3>
+              <ul className="space-y-4">
+                {[
+                  "RTO scored automatically at checkout",
+                  "WhatsApp bot handles 95% of inquiries",
+                  "Abandoned carts recovered autonomously",
+                  "Returns portal + instant Shiprocket pickup",
+                  "Stuck shipments auto-detected and recovered",
+                  "Live dashboard with conversational queries",
+                  "Refunds auto-approved under thresholds",
+                  "Churn predicted, win-back sent before it happens",
+                ].map((item) => (
+                  <li key={item} className="flex gap-3">
+                    <span className="text-[var(--lime)]">✓</span>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* CTA */}
-      <section style={{ padding: "120px 48px", textAlign: "center", borderTop: "1px solid #111" }}>
-        <h2 style={{ fontSize: 56, fontWeight: 800, letterSpacing: -1.5, margin: "0 0 24px" }}>
-          We're building in public.
-        </h2>
-        <p style={{ color: "#666", fontSize: 18, marginBottom: 48 }}>
-          Join our early access program. Be one of the first to automate your entire business.
-        </p>
-        <a
-          href="/early-access"
-          style={{
-            display: "inline-block",
-            background: "#fff",
-            color: "#000",
-            padding: "16px 40px",
-            borderRadius: 12,
-            textDecoration: "none",
-            fontSize: 16,
-            fontWeight: 700,
-          }}
-        >
-          Get Early Access — Free Beta
-        </a>
+      {/* === SOCIAL PROOF === */}
+      <section className="pb-section bg-[var(--soft)]">
+        <div className="pb-container text-center">
+          <Eyebrow>☆ Trusted by D2C leaders</Eyebrow>
+          <h2 className="pb-h2 mb-12">Brands shipping 1K–100K orders/month</h2>
+
+          <div className="pb-grid-3 mb-12">
+            {[
+              {
+                metric: "8.3x",
+                label: "Return rate reduction",
+                source: "Unbrand Store, 3-month average",
+              },
+              {
+                metric: "₹4.2L/mo",
+                label: "COD float unlocked",
+                source: "Through RTO accuracy improvements",
+              },
+              {
+                metric: "96%",
+                label: "Customer queries resolved autonomously",
+                source: "WhatsApp agent without escalation",
+              },
+              {
+                metric: "3.4x",
+                label: "Win-back conversion improvement",
+                source: "vs manual campaigns",
+              },
+              {
+                metric: "42h",
+                label: "Weekly ops time freed up",
+                source: "Merchant reported",
+              },
+              {
+                metric: "Day 15",
+                label: "Time to ROI positive",
+                source: "For typical ₹2L/mo brands",
+              },
+            ].map((stat) => (
+              <Card key={stat.metric} padding="default">
+                <div className="text-4xl font-bold text-[var(--neon-blue-3)] mb-2">{stat.metric}</div>
+                <div className="font-semibold mb-1">{stat.label}</div>
+                <div className="text-xs text-[var(--text-3)]">{stat.source}</div>
+              </Card>
+            ))}
+          </div>
+        </div>
       </section>
 
-      {/* Footer */}
-      <footer style={{ padding: "40px 48px", borderTop: "1px solid #111", display: "flex", justifyContent: "space-between", color: "#444", fontSize: 13 }}>
-        <span>© 2025 D2C OS</span>
-        <div style={{ display: "flex", gap: 24 }}>
-          <a href="/privacy" style={{ color: "#444", textDecoration: "none" }}>Privacy</a>
-          <a href="/terms" style={{ color: "#444", textDecoration: "none" }}>Terms</a>
+      {/* === TESTIMONIALS === */}
+      <section className="pb-section">
+        <div className="pb-container">
+          <div className="text-center mb-12">
+            <Eyebrow>◇ What brands say</Eyebrow>
+          </div>
+
+          <div className="pb-grid-3">
+            {[
+              {
+                quote:
+                  "We fired our returns vendor and saved ₹60K/month. Pulseback handles everything now, faster and with fewer complaints.",
+                author: "Founder, Fashion D2C",
+                role: "₹8Cr/year brand",
+              },
+              {
+                quote:
+                  "Our support team went from 5 people to 1 supervisor. The WhatsApp bot handles 95% of questions. The remaining 5% are escalated instantly with full context.",
+                author: "Ops Lead, Electronics Store",
+                role: "₹12Cr/year brand",
+              },
+              {
+                quote:
+                  "The RTO model blocked 300 orders that would've cost us ₹8L in refunds. Pulseback pays for itself in one month.",
+                author: "Founder, Beauty Brand",
+                role: "₹5Cr/year brand",
+              },
+            ].map((testimonial) => (
+              <Card key={testimonial.author} padding="feature">
+                <p className="text-[var(--text-2)] mb-6 italic">"{testimonial.quote}"</p>
+                <div className="border-t border-[var(--line)] pt-4">
+                  <div className="font-semibold">{testimonial.author}</div>
+                  <div className="text-xs text-[var(--text-3)]">{testimonial.role}</div>
+                </div>
+              </Card>
+            ))}
+          </div>
         </div>
-      </footer>
-    </main>
+      </section>
+
+      {/* === PRICING (TEASER) === */}
+      <section className="pb-section bg-[var(--cream)]">
+        <div className="pb-container">
+          <div className="text-center mb-12">
+            <Eyebrow>💸 Pricing for growth</Eyebrow>
+            <h2 className="pb-h2">Start where you are. Scale as you grow.</h2>
+          </div>
+
+          <div className="pb-grid-3">
+            {[
+              { name: "Starter", price: "₹29,999", orders: "Up to 10K/mo" },
+              { name: "Growth", price: "₹79,999", orders: "10K–50K/mo" },
+              { name: "Enterprise", price: "Custom", orders: "50K+/mo" },
+            ].map((plan) => (
+              <Card key={plan.name} padding="feature" className="flex flex-col">
+                <h3 className="pb-h3 mb-2">{plan.name}</h3>
+                <div className="text-3xl font-bold mb-2">{plan.price}</div>
+                <div className="text-sm text-[var(--text-3)] mb-6">{plan.orders}</div>
+                <Button variant="primary" size="md" className="mt-auto">
+                  Learn more
+                </Button>
+              </Card>
+            ))}
+          </div>
+
+          <div className="text-center mt-12">
+            <Button variant="secondary" size="lg" href="/pricing">
+              See full pricing & features
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* === FAQ === */}
+      <section className="pb-section">
+        <div className="pb-container max-w-2xl">
+          <div className="text-center mb-12">
+            <Eyebrow>? Questions answered</Eyebrow>
+            <h2 className="pb-h2">Common questions</h2>
+          </div>
+
+          <div className="space-y-4">
+            {[
+              {
+                q: "How long before Pulseback starts helping?",
+                a: "By day 1, it's scoring orders for RTO risk. By day 15, it's autonomously making decisions. By day 30, you'll see measurable impact on COD float, support volume, and return rate.",
+              },
+              {
+                q: "What if I don't like a decision Pulseback makes?",
+                a: "Every decision is logged with reasoning. You can override it instantly via WhatsApp. The system learns from your feedback and adjusts weights for future decisions.",
+              },
+              {
+                q: "Can I use Pulseback with a custom order management system?",
+                a: "If your system has webhooks or APIs, yes. We integrate with Shopify, WooCommerce, and custom stacks. Talk to our team about your setup.",
+              },
+              {
+                q: "Is my customer data safe?",
+                a: "Yes. Data is encrypted in transit and at rest. We use Supabase (AWS-backed). Compliance: DPDP Act (India), ISO 27001 ready.",
+              },
+              {
+                q: "What's the commitment term?",
+                a: "Month-to-month. Cancel anytime. Most brands see ROI in 30 days, so they never need to.",
+              },
+              {
+                q: "How does pricing scale?",
+                a: "Starter (≤10K/mo), Growth (10K–50K/mo), Enterprise (50K+/mo). Billing is monthly based on your monthly order volume.",
+              },
+            ].map((faq) => (
+              <details key={faq.q} className="pb-card pb-card-default group cursor-pointer">
+                <summary className="font-semibold flex justify-between items-center group-open:text-[var(--lime)]">
+                  {faq.q}
+                  <span className="text-lg">+</span>
+                </summary>
+                <p className="text-[var(--text-2)] mt-4 text-sm">{faq.a}</p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* === FINAL CTA === */}
+      <FinalCTA
+        title="Ready to run on autopilot?"
+        subtitle="50+ D2C brands are. Join this month and get your first month 30% off."
+      />
+
+      {/* === FOOTER === */}
+      <Footer />
+    </>
   )
 }

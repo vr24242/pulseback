@@ -9,7 +9,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@trpc/server": "^10.45.0",
+    "@trpc/server": "^11.13.0",
     "@anthropic-ai/sdk": "^0.24.3",
     "@d2c/database": "file:../database",
     "zod": "^3.22.0",

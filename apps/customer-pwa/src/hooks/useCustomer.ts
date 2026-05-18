@@ -3,7 +3,7 @@ import { trpc } from "@/lib/trpc.js"
 /**
  * Hook to fetch a customer's order by order name and phone
  */
-export function useOrder(orderName: string, phone: string) {
+export function useOrder(orderName: string, phone: string): any {
   return trpc.customer.getOrder.useQuery(
     { orderName, phone },
     {

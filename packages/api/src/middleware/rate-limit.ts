@@ -1,11 +1,11 @@
-import { t } from "../index"
+import { t } from "../trpc.js"
 
 /**
  * Rate limiting middleware
  * Placeholder for Redis-backed rate limiting
  * TODO: implement Redis-based rate limiting when Redis client is available
  */
-export const rateLimitMiddleware = t.middleware(async ({ ctx, path, next }) => {
+export const rateLimitMiddleware = t.middleware(async ({ ctx, path, next }: any) => {
   // Rate limiting disabled in development
   // In production, implement Redis-based rate limiting:
   // const ip = ctx.ip || "unknown"

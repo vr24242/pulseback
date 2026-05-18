@@ -16,6 +16,7 @@
     "./marketing": "./src/marketing/index.ts",
     "./agents": "./src/agents/index.ts",
     "./events": "./src/events/index.ts",
+    "./subagents": "./src/subagents/index.ts",
     "./queue": "./src/queue/index.ts",
     "./queue/communication.worker": "./src/queue/workers/communication.worker.ts",
     "./queue/tracking.worker": "./src/queue/workers/tracking.worker.ts",

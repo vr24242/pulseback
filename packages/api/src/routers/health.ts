@@ -1,4 +1,4 @@
-import { router, publicProcedure } from "../index"
+import { router, publicProcedure } from "../index.js"
 
 export const healthRouter = router({
   check: publicProcedure.query(() => {
