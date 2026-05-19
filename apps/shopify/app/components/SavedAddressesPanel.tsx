@@ -107,16 +107,18 @@ export function SavedAddressesPanel({
           key={address.id}
           style={selectedAddressId === address.id ? selectedStyle : cardStyle}
           onClick={() => !loading && onSelectAddress(address)}
-          onMouseEnter={e => {
+          onMouseEnter={(e: React.MouseEvent<HTMLDivElement>) => {
+            const elem = e.currentTarget as HTMLElement
             if (selectedAddressId !== address.id) {
-              (e.currentTarget as HTMLElement).style.borderColor = "#d1d5db"
-              (e.currentTarget as HTMLElement).style.backgroundColor = "#f9fafb"
+              elem.style.borderColor = "#d1d5db"
+              elem.style.backgroundColor = "#f9fafb"
             }
           }}
-          onMouseLeave={e => {
+          onMouseLeave={(e: React.MouseEvent<HTMLDivElement>) => {
+            const elem = e.currentTarget as HTMLElement
             if (selectedAddressId !== address.id) {
-              (e.currentTarget as HTMLElement).style.borderColor = "#e5e7eb"
-              (e.currentTarget as HTMLElement).style.backgroundColor = "transparent"
+              elem.style.borderColor = "#e5e7eb"
+              elem.style.backgroundColor = "transparent"
             }
           }}
         >

@@ -28,11 +28,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     where: { shopId, pincode: { not: null }, isRTO: true, createdAt: { gte: since90d } },
     _count: { id: true },
   })
-  const rtoCountMap = Object.fromEntries(rtoByPincode.map(r => [r.pincode, r._count.id]))
+  const rtoCountMap = Object.fromEntries(rtoByPincode.map((r: typeof rtoByPincode[number]) => [r.pincode, r._count.id]))
 
   const pincodeData = pincodeRaw
-    .filter(r => r.pincode && r._count.id >= 1)
-    .map(r => ({
+    .filter((r: typeof pincodeRaw[number]) => r.pincode && r._count.id >= 1)
+    .map((r: typeof pincodeRaw[number]) => ({
       pincode: r.pincode!,
       totalOrders: r._count.id,
       rtoCount: rtoCountMap[r.pincode!] ?? 0,
@@ -47,7 +47,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     where: { order: { shopId }, createdAt: { gte: since90d } },
     _count: { id: true },
   })
-  const carrierNames = carriers.map(c => c.carrier)
+  const carrierNames = carriers.map((c: typeof carriers[number]) => c.carrier)
 
   const [carrierDelivered, carrierRTO, carrierStuck, carrierAvgDays] = await Promise.all([
     db.shipment.groupBy({
@@ -78,10 +78,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     `.catch(() => [] as Array<{ carrier: string; avg_days: number }>),
   ])
 
-  const deliveredMap = Object.fromEntries(carrierDelivered.map(c => [c.carrier, c._count.id]))
-  const rtoMap = Object.fromEntries(carrierRTO.map(c => [c.carrier, c._count.id]))
-  const stuckMap = Object.fromEntries(carrierStuck.map(c => [c.carrier, c._count.id]))
-  const avgDaysMap = Object.fromEntries(carrierAvgDays.map(c => [c.carrier, Number(c.avg_days)]))
+  const deliveredMap = Object.fromEntries(carrierDelivered.map((c: typeof carrierDelivered[number]) => [c.carrier, c._count.id]))
+  const rtoMap = Object.fromEntries(carrierRTO.map((c: typeof carrierRTO[number]) => [c.carrier, c._count.id]))
+  const stuckMap = Object.fromEntries(carrierStuck.map((c: typeof carrierStuck[number]) => [c.carrier, c._count.id]))
+  const avgDaysMap = Object.fromEntries(carrierAvgDays.map((c: typeof carrierAvgDays[number]) => [c.carrier, Number(c.avg_days)]))
 
   const carrierData = carriers.map(c => {
     const total = c._count.id

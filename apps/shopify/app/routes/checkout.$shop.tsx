@@ -113,16 +113,16 @@ export default function CheckoutPage() {
   const [addressLabel, setAddressLabel] = useState("")
 
   // Saved addresses
-  const savedAddresses = useSavedAddresses(customer?.customerId ?? null)
+  const savedAddresses = useSavedAddresses(customer?.id ?? null)
 
   const otpRefs = useRef<Array<HTMLInputElement | null>>([])
 
   // Fetch saved addresses when customer logs in
   useEffect(() => {
-    if (customer?.customerId) {
+    if (customer?.id) {
       savedAddresses.fetchAddresses()
     }
-  }, [customer?.customerId])
+  }, [customer?.id])
 
   // Validate & auto-fill city/state when pincode changes (debounced)
   useEffect(() => {
@@ -687,7 +687,7 @@ export default function CheckoutPage() {
               setErrorMsg("")
 
               // Save address if checkbox is checked
-              if (showSaveAddress && customer?.customerId) {
+              if (showSaveAddress && customer?.id) {
                 const saved = await savedAddresses.saveAddress({
                   name,
                   phone,

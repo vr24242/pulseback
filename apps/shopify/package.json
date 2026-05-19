@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "build": "remix vite:build && npm run build:worker",
-    "build:worker": "esbuild worker/index.ts --bundle --platform=node --target=node20 --outfile=build/worker/index.js --external:@prisma/client --external:prisma",
+    "build:worker": "esbuild worker/index.ts --bundle --platform=node --target=node20 --outfile=build/worker/index.js --external:@prisma/client --external:prisma --external:resend",
     "dev": "shopify app dev",
     "lint": "eslint --cache --cache-location ./node_modules/.cache/eslint .",
     "typecheck": "tsc --noEmit",
@@ -28,7 +28,8 @@
     "@shopify/shopify-app-session-storage-prisma": "^5.0.6",
     "isbot": "^5.1.0",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "resend": "^6.12.3"
   },
   "devDependencies": {
     "@remix-run/dev": "^2.10.0",

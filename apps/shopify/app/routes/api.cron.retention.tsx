@@ -21,7 +21,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const results: Record<string, string> = {}
 
   await Promise.allSettled(
-    shops.map(async (shop) => {
+    shops.map(async (shop: typeof shops[number]) => {
       try {
         await runRetentionSweep(shop.id)
         results[shop.domain] = "ok"

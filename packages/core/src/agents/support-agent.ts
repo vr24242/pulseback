@@ -254,7 +254,7 @@ async function executeSupportTool(
     await db.order.update({
       where: { id: input.orderId as string },
       data: {
-        shippingAddress: newAddress as unknown as import("@prisma/client").Prisma.InputJsonValue,
+        shippingAddress: newAddress as Record<string, unknown>,
         pincode: newAddress.pincode,
       },
     })

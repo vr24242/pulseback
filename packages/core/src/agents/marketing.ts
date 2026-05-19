@@ -3,7 +3,7 @@ import { CalendarAgent } from "./calendar"
 import type { CustomerMemory } from "./customer-memory"
 import { generateMessage } from "./communication"
 import { generateOutcomeRef } from "./outcome-tracker"
-import { redis } from "@d2c/redis"
+import { getRedis } from "../queue/redis"
 
 /**
  * Marketing Agent
@@ -126,7 +126,7 @@ export async function decideCampaignAction(
   }
 
   // Key rule: pending issues → hold marketing
-  if (memory.hasPendingNDR || memory.hasPendingRefund || memory.hasPendingReturn) {
+  if (memory.hasOpenNDR || memory.hasPendingRefund || memory.hasPendingReturn) {
     return {
       send: false,
       campaignType: campaign.type,

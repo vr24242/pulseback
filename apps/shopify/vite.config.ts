@@ -23,7 +23,7 @@ export default defineConfig({
   build: {
     assetsInlineLimit: 0,
     rollupOptions: {
-      external: ["bullmq", "ioredis", "worker_threads"],
+      external: ["bullmq", "ioredis", "worker_threads", "resend"],
     },
   },
   optimizeDeps: {

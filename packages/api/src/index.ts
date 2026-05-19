@@ -14,6 +14,7 @@ import { merchantRouter } from "./routers/merchant.js"
 import { customerRouter } from "./routers/customer.js"
 import { authRouter } from "./routers/auth.js"
 import { healthRouter } from "./routers/health.js"
+import { stakeholderRouter } from "./routers/stakeholder.js"
 
 /**
  * Root router - combines all domain routers
@@ -23,6 +24,7 @@ export const appRouter = router({
   health: healthRouter,
   auth: authRouter,
   customer: customerRouter,
+  stakeholder: stakeholderRouter,
 
   // Protected endpoints (auth required)
   merchant: merchantRouter,

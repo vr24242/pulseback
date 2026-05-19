@@ -197,7 +197,7 @@ async function handleOrderStatus(
 
   if (orders.length === 0) {
     return {
-      message: `You don't have any orders in transit right now. Your last order was delivered on ${memory.lastOrderDate?.toLocaleDateString()}. Would you like to place a new order?`,
+      message: `You don't have any orders in transit right now. Your last order was delivered on ${memory.lastOrderAt?.toLocaleDateString()}. Would you like to place a new order?`,
       intent: "order_status",
       sentiment: "neutral",
       actionsTaken,
@@ -256,7 +256,7 @@ async function handleReturn(
 
   if (!recentDelivered) {
     return {
-      message: `You don't have any eligible orders for return (must be within 7 days of delivery). Your last order was delivered on ${memory.lastOrderDate?.toLocaleDateString()}.`,
+      message: `You don't have any eligible orders for return (must be within 7 days of delivery). Your last order was delivered on ${memory.lastOrderAt?.toLocaleDateString()}.`,
       intent: "return",
       sentiment: "neutral",
       actionsTaken: ["checked_eligibility"],
@@ -288,7 +288,7 @@ async function handleRefund(
 ): Promise<SupportResponse> {
   if (!memory.hasPendingRefund) {
     return {
-      message: `You don't have any pending refunds. Your last refund was processed on ${memory.lastOrderDate?.toLocaleDateString()}.`,
+      message: `You don't have any pending refunds. Your last refund was processed on ${memory.lastOrderAt?.toLocaleDateString()}.`,
       intent: "refund",
       sentiment: "neutral",
       actionsTaken: ["checked_refund_status"],
@@ -457,7 +457,7 @@ async function handleGenericQuery(
 Customer context:
 - Name: ${memory.customerId}
 - Orders: ${memory.totalOrders}
-- Last order: ${memory.lastOrderDate?.toLocaleDateString()}
+- Last order: ${memory.lastOrderAt?.toLocaleDateString()}
 
 Customer message: "${request.message}"
 

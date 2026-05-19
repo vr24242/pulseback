@@ -1,0 +1,31 @@
+{
+  "name": "@d2c/stakeholder-analytics-pwa",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.20.0",
+    "@tanstack/react-query": "^5.28.0",
+    "@trpc/client": "^10.43.0",
+    "@trpc/react-query": "^10.43.0",
+    "superjson": "^2.2.1",
+    "jose": "^5.1.3",
+    "chart.js": "^4.4.0",
+    "react-chartjs-2": "^5.2.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3",
+    "@types/react": "^18.2.37",
+    "@types/react-dom": "^18.2.15",
+    "@types/node": "^20.10.0",
+    "vite": "^5.0.7",
+    "@vitejs/plugin-react": "^4.2.1"
+  }
+}
