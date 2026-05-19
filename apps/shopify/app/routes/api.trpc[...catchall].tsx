@@ -1,66 +1,49 @@
-/**
- * tRPC API Handler
- * Unified API endpoint for all web surfaces (Customer PWA, Merchant PWA, etc.)
- *
- * Route: /api/trpc/*
- *
- * Example endpoints:
- * - /api/trpc/health?input={}
- * - /api/trpc/customer.getOrder?input={...}
- * - /api/trpc/merchant.orders?input={}
- *
- * NOTE: tRPC is currently in development. Using stub health endpoint.
- * Full PWA integration will be available after Phase 3.1 testing completes.
- */
-
 import type { LoaderFunctionArgs } from "@remix-run/node"
-import { json } from "@remix-run/node"
 
 /**
- * Stub health endpoint for tRPC API
- * TODO: Integrate full tRPC router once package dependencies resolved
+ * tRPC API Handler (Phase 3.1 PWA support)
+ * Stub endpoint - full tRPC integration in Phase 4
  */
 export async function loader({ request }: LoaderFunctionArgs) {
+  const pathname = new URL(request.url).pathname
+  const corsHeaders = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  }
+
   // Handle CORS preflight
   if (request.method === "OPTIONS") {
     return new Response(null, {
       status: 204,
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type, Authorization",
-      },
+      headers: corsHeaders,
     })
   }
 
-  // Health check endpoint for now
-  if (new URL(request.url).pathname.includes("/health")) {
-    return json(
-      {
+  // Health check
+  if (pathname.includes("/health")) {
+    return new Response(
+      JSON.stringify({
         status: "ok",
-        timestamp: new Date().toISOString(),
         version: "1.0.0",
-      },
+        timestamp: new Date().toISOString(),
+      }),
       {
-        headers: {
-          "Access-Control-Allow-Origin": "*",
-        },
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       }
     )
   }
 
-  // Placeholder for tRPC endpoints
-  return json(
-    {
-      error: "tRPC endpoints under construction",
-      status: "coming_soon",
-      docs: "See README.md for Phase 3 PWA integration details",
-    },
+  // Placeholder
+  return new Response(
+    JSON.stringify({
+      error: "tRPC endpoints coming soon",
+      status: "development",
+    }),
     {
       status: 503,
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-      },
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     }
   )
 }
