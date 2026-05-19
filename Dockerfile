@@ -9,6 +9,7 @@ COPY package.json package-lock.json turbo.json ./
 COPY packages/database/package.json ./packages/database/
 COPY packages/shared/package.json ./packages/shared/
 COPY packages/core/package.json ./packages/core/
+COPY packages/api/package.json ./packages/api/
 COPY apps/shopify/package.json ./apps/shopify/
 
 RUN npm install --legacy-peer-deps
