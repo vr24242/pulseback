@@ -8,21 +8,28 @@ import { Button } from "@/components/ui/Button"
 import { Card } from "@/components/ui/Card"
 import { Eyebrow } from "@/components/ui/Eyebrow"
 import { Chip } from "@/components/ui/Chip"
-import { FinalCTA } from "@/components/sections/FinalCTA"
-import { Sparkles, Zap, Brain, TrendingUp, BarChart3, Wallet, MessageCircle, Truck } from "lucide-react"
 
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: { staggerChildren: 0.1, delayChildren: 0.2 },
+    transition: { staggerChildren: 0.15, delayChildren: 0.1 },
   },
 }
 
 const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
+  hidden: { opacity: 0, y: 30 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.7 } },
 }
+
+// Abstract shape components
+const ShapeCircle = ({ className = "" }) => (
+  <div className={`absolute rounded-full ${className}`} />
+)
+
+const ShapeGradient = ({ className = "" }) => (
+  <div className={`absolute blur-3xl ${className}`} />
+)
 
 export default function Home() {
   return (
@@ -31,34 +38,12 @@ export default function Home() {
 
       {/* === HERO SECTION === */}
       <section
-        className="pb-section-large relative overflow-hidden"
-        style={{ marginTop: "var(--topbar-h)", paddingTop: "var(--s-10)" }}
+        className="relative overflow-hidden"
+        style={{ marginTop: "var(--topbar-h)", paddingTop: "120px", paddingBottom: "80px" }}
       >
-        {/* Animated gradient background */}
-        <div
-          className="absolute inset-0 pb-gradient-animated opacity-30"
-          style={{
-            background: "var(--gradient-hero)",
-          }}
-        />
-
-        {/* Floating orbs */}
-        <motion.div
-          className="absolute top-20 right-10 w-72 h-72 rounded-full"
-          style={{
-            background: "radial-gradient(circle, rgba(38, 150, 176, 0.3) 0%, transparent 70%)",
-          }}
-          animate={{ y: [0, -30, 0], x: [0, 20, 0] }}
-          transition={{ duration: 5, repeat: Infinity }}
-        />
-        <motion.div
-          className="absolute bottom-20 left-10 w-96 h-96 rounded-full"
-          style={{
-            background: "radial-gradient(circle, rgba(220, 239, 138, 0.2) 0%, transparent 70%)",
-          }}
-          animate={{ y: [0, 30, 0], x: [0, -20, 0] }}
-          transition={{ duration: 6, repeat: Infinity, delay: 0.5 }}
-        />
+        {/* Abstract shapes */}
+        <ShapeGradient className="top-0 right-0 w-[600px] h-[600px] bg-gradient-to-br from-blue-400/20 to-purple-400/10 -translate-y-1/2 translate-x-1/3" />
+        <ShapeGradient className="bottom-0 left-0 w-[500px] h-[500px] bg-gradient-to-tr from-lime-400/15 to-blue-400/5 translate-y-1/2 -translate-x-1/4" />
 
         <motion.div
           className="pb-container relative z-10"
@@ -66,196 +51,112 @@ export default function Home() {
           initial="hidden"
           animate="visible"
         >
-          <div className="max-w-3xl">
-            <motion.div variants={itemVariants}>
-              <Eyebrow>⌥ Autonomy meets insight</Eyebrow>
+          <div className="max-w-4xl">
+            <motion.div variants={itemVariants} className="mb-8">
+              <div className="inline-block px-4 py-2 rounded-full bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200/50">
+                <span className="text-sm font-medium text-blue-900">The Operating System for D2C</span>
+              </div>
             </motion.div>
 
             <motion.h1
-              className="pb-h1 mb-6 bg-clip-text text-transparent pb-gradient-animated"
-              style={{ backgroundSize: "200% 200%" }}
+              className="text-6xl md:text-7xl font-display font-bold mb-8 leading-tight text-[var(--forest)]"
               variants={itemVariants}
             >
-              The AI operations team your D2C brand can't afford to hire.
+              Ship operations, not support tickets.
             </motion.h1>
 
-            <motion.p className="pb-lead text-[var(--text-2)] mb-8" variants={itemVariants}>
-              Pulseback runs in the background of your Shopify store. It autonomously handles checkout scoring,
-              customer support, returns logistics, retention campaigns, analytics, inventory, and financial
-              reconciliation — all personalized to your customers' behavior, all learning and compounding every day.
+            <motion.p
+              className="text-2xl text-[var(--text-2)] mb-12 leading-relaxed max-w-2xl"
+              variants={itemVariants}
+            >
+              Pulseback replaces six tools with a single intelligent operating system that learns your business, automates your workflows, and compounds your growth every single day.
             </motion.p>
 
-            <motion.div className="flex gap-4 flex-wrap" variants={itemVariants}>
+            <motion.div className="flex gap-6 flex-wrap" variants={itemVariants}>
               <Button variant="primary" size="lg" href="/contact">
-                Book a demo →
+                Request a demo
               </Button>
               <Button variant="secondary" size="lg" href="/how-it-works">
-                Learn how it works
+                Learn more
               </Button>
             </motion.div>
           </div>
         </motion.div>
       </section>
 
-      {/* === THE 7 DOMAIN AGENTS === */}
-      <section className="pb-section bg-gradient-to-b from-[var(--soft)] to-[var(--paper)]">
-        <div className="pb-container">
+      {/* === THE AGENTS === */}
+      <section className="relative py-32 bg-gradient-to-b from-transparent via-blue-50/30 to-transparent">
+        <ShapeGradient className="absolute top-1/4 right-10 w-96 h-96 bg-gradient-to-bl from-purple-300/10 to-transparent blur-3xl" />
+
+        <div className="pb-container relative z-10">
           <motion.div
-            className="text-center mb-12"
-            initial={{ opacity: 0, y: 20 }}
+            className="text-center mb-24"
+            initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
+            transition={{ duration: 0.7 }}
           >
-            <Eyebrow>◇ The seven operating systems</Eyebrow>
-            <h2 className="pb-h2">One AI. Seven workflows. Complete autonomy.</h2>
-            <p className="text-[var(--text-2)] max-w-2xl mx-auto mt-4">
-              Each domain agent owns its workflow. Together, they orchestrate your entire business.
+            <h2 className="text-5xl md:text-6xl font-display font-bold text-[var(--forest)] mb-6">
+              Seven AI agents. One operating system.
+            </h2>
+            <p className="text-xl text-[var(--text-2)] max-w-3xl mx-auto">
+              Every aspect of your business runs on specialized intelligence that learns, improves, and compounds.
             </p>
           </motion.div>
 
           <motion.div
-            className="pb-grid-3"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
             variants={containerVariants}
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true }}
+            viewport={{ once: true, margin: "-100px" }}
           >
             {[
               {
-                icon: <Zap className="w-6 h-6" />,
-                title: "Checkout OS",
-                color: "blue",
-                description: "RTO scoring, pincode intelligence, COD blocking, payment optimization",
-                gradient: "from-blue-400 to-blue-600"
+                title: "Checkout",
+                description: "Intelligent order qualification. Real-time RTO scoring. Dynamic payment routing.",
+                accent: "from-blue-500 to-blue-600",
               },
               {
-                icon: <MessageCircle className="w-6 h-6" />,
-                title: "WhatsApp Agent OS",
-                color: "green",
-                description: "Multilingual support, intent classification, personalized responses, proactive help",
-                gradient: "from-green-400 to-green-600"
+                title: "Support",
+                description: "Every WISMO resolved in seconds. Multilingual understanding. Proactive assistance.",
+                accent: "from-emerald-500 to-emerald-600",
               },
               {
-                icon: <Truck className="w-6 h-6" />,
-                title: "NDR OS",
-                color: "cyan",
-                description: "Shipment triage, address correction, reverse pickup, RTO management",
-                gradient: "from-cyan-400 to-cyan-600"
+                title: "Logistics",
+                description: "Shipment triage at scale. Automated NDR handling. Reverse logistics orchestration.",
+                accent: "from-cyan-500 to-cyan-600",
               },
               {
-                icon: <Brain className="w-6 h-6" />,
-                title: "Retention OS",
-                color: "purple",
-                description: "Churn prediction, segment-specific campaigns, win-back offers, lifecycle intelligence",
-                gradient: "from-purple-400 to-purple-600"
+                title: "Retention",
+                description: "Lifecycle intelligence built in. Segment-specific messaging. Win-back automation.",
+                accent: "from-purple-500 to-purple-600",
               },
               {
-                icon: <BarChart3 className="w-6 h-6" />,
-                title: "Analytics OS",
-                color: "lime",
-                description: "Conversational queries, cohort analysis, weekly pattern discovery, anomaly alerts",
-                gradient: "from-lime-400 to-lime-600"
+                title: "Analytics",
+                description: "Conversational business insights. Cohort analysis. Weekly pattern discovery.",
+                accent: "from-amber-500 to-amber-600",
               },
               {
-                icon: <Wallet className="w-6 h-6" />,
-                title: "Finance OS",
-                color: "blue",
-                description: "COD float tracking, true ROAS, cash flow forecasts, reconciliation",
-                gradient: "from-amber-400 to-orange-600"
+                title: "Finance",
+                description: "Real-time COD float tracking. True ROAS measurement. Automated reconciliation.",
+                accent: "from-rose-500 to-rose-600",
               },
-            ].map((os, idx) => (
+            ].map((agent, idx) => (
               <motion.div
-                key={os.title}
+                key={agent.title}
                 variants={itemVariants}
                 whileHover={{
-                  y: -8,
-                  boxShadow: "0 30px 60px rgba(11, 31, 26, 0.2)"
+                  y: -12,
+                  transition: { duration: 0.3 }
                 }}
               >
-                <Card padding="feature" hover className="flex flex-col h-full pb-3d-card group relative overflow-hidden">
-                  {/* Gradient background effect */}
-                  <div className={`absolute inset-0 bg-gradient-to-br ${os.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-300`} />
+                <div className="group h-full">
+                  {/* Gradient accent line */}
+                  <div className={`h-1 w-12 bg-gradient-to-r ${agent.accent} rounded-full mb-6 group-hover:w-16 transition-all duration-300`} />
 
-                  {/* Icon with gradient */}
-                  <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${os.gradient} p-2 text-white mb-4 group-hover:scale-110 transition-transform duration-300`}>
-                    {os.icon}
-                  </div>
-
-                  <h3 className="font-bold text-lg mb-2">{os.title}</h3>
-                  <p className="text-[var(--text-3)] text-sm flex-1">{os.description}</p>
-                  <Chip color={os.color as any} className="mt-4 w-fit">
-                    {os.title.replace(" OS", "")}
-                  </Chip>
-                </Card>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-      </section>
-
-      {/* === 3-PHASE SYSTEM === */}
-      <section className="pb-section bg-gradient-to-b from-[var(--paper)] to-[var(--soft)]">
-        <div className="pb-container">
-          <motion.div
-            className="text-center mb-16"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-          >
-            <Eyebrow>⚙ The three-phase system</Eyebrow>
-            <h2 className="pb-h2">Connect → Learn → Automate</h2>
-          </motion.div>
-
-          <motion.div
-            className="grid grid-cols-1 md:grid-cols-3 gap-8"
-            variants={containerVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-          >
-            {[
-              {
-                phase: "1",
-                title: "Connect",
-                description: "Install on your Shopify store. We read your order history, shipments, and customer behavior.",
-                color: "from-blue-500 to-blue-600",
-                number: "1"
-              },
-              {
-                phase: "2",
-                title: "Learn",
-                description: "Agents observe patterns over 14 days. RTO model trains. Personalization kicks in.",
-                color: "from-purple-500 to-purple-600",
-                number: "2"
-              },
-              {
-                phase: "3",
-                title: "Automate",
-                description: "Day 15+, agents make every decision. Checkout scoring, support, returns, marketing — all autonomous.",
-                color: "from-lime-500 to-lime-600",
-                number: "3"
-              },
-            ].map((phase) => (
-              <motion.div
-                key={phase.phase}
-                variants={itemVariants}
-                className="relative group"
-              >
-                <div className={`absolute inset-0 bg-gradient-to-br ${phase.color} rounded-2xl opacity-0 group-hover:opacity-10 blur-xl transition-all duration-300`} />
-
-                <div className="relative bg-white border-2 border-[var(--line)] rounded-2xl p-8 group-hover:border-[var(--lime)] transition-all duration-300 pb-3d-card">
-                  <motion.div
-                    className={`w-16 h-16 rounded-xl bg-gradient-to-br ${phase.color} text-white flex items-center justify-center text-3xl font-bold mb-6`}
-                    animate={{ rotate: [0, 5, -5, 0] }}
-                    transition={{ duration: 3, repeat: Infinity }}
-                  >
-                    {phase.number}
-                  </motion.div>
-
-                  <h3 className="text-2xl font-bold mb-3 text-[var(--forest)]">{phase.title}</h3>
-                  <p className="text-[var(--text-2)]">{phase.description}</p>
+                  <h3 className="text-2xl font-bold text-[var(--forest)] mb-3">{agent.title}</h3>
+                  <p className="text-lg text-[var(--text-2)] leading-relaxed">{agent.description}</p>
                 </div>
               </motion.div>
             ))}
@@ -263,130 +164,156 @@ export default function Home() {
         </div>
       </section>
 
-      {/* === BEFORE/AFTER TRANSFORMATION === */}
-      <section className="pb-section bg-gradient-to-b from-[var(--soft)] to-[var(--paper)]">
+      {/* === HOW IT WORKS === */}
+      <section className="py-32 bg-white">
         <div className="pb-container">
           <motion.div
-            className="text-center mb-16"
-            initial={{ opacity: 0, y: 20 }}
+            className="text-center mb-20"
+            initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
+            transition={{ duration: 0.7 }}
           >
-            <Eyebrow>✦ The transformation</Eyebrow>
-            <h2 className="pb-h2">From manual. To autonomous.</h2>
+            <h2 className="text-5xl md:text-6xl font-display font-bold text-[var(--forest)] mb-6">
+              Three phases to full autonomy.
+            </h2>
           </motion.div>
 
           <motion.div
-            className="grid grid-cols-1 md:grid-cols-2 gap-8"
+            className="grid grid-cols-1 md:grid-cols-3 gap-12"
             variants={containerVariants}
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true }}
-          >
-            <motion.div
-              variants={itemVariants}
-              className="pb-3d-card p-8 rounded-2xl bg-gradient-to-br from-red-50 to-red-100 border border-red-200"
-            >
-              <h3 className="text-xl font-bold mb-6 text-red-900">❌ Today (without Pulseback)</h3>
-              <ul className="space-y-3">
-                {[
-                  "Abandoned carts ignored — manual followups",
-                  "Support tickets pile up — customers wait",
-                  "RTOs spike — no predictive scoring",
-                  "Marketing blasts → low conversion",
-                  "Returns chaos — manual approvals",
-                  "Finance confused — no COD float tracking",
-                ].map((item) => (
-                  <li key={item} className="flex gap-3 text-red-800">
-                    <span className="line-through opacity-50 flex-1">{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </motion.div>
-
-            <motion.div
-              variants={itemVariants}
-              className="pb-3d-card p-8 rounded-2xl bg-gradient-to-br from-green-50 to-green-100 border border-green-200"
-            >
-              <h3 className="text-xl font-bold mb-6 text-green-900">✅ With Pulseback</h3>
-              <ul className="space-y-3">
-                {[
-                  "Touch 1/2/3 auto-sent → 35% recovered",
-                  "WISMO resolved in seconds → 0 tickets",
-                  "RTO predicted + blocked → 8.3x reduction",
-                  "Personalized offers → 3x higher conversion",
-                  "Returns approved automatically → 48h fulfillment",
-                  "COD float tracked → ₹4.2L working capital freed",
-                ].map((item) => (
-                  <li key={item} className="flex gap-3 text-green-800">
-                    <span className="font-semibold flex-1">{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </motion.div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* === SOCIAL PROOF === */}
-      <section className="pb-section bg-gradient-to-b from-[var(--paper)] to-[var(--canvas)]">
-        <div className="pb-container">
-          <motion.div
-            className="text-center mb-16"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-          >
-            <Eyebrow>📊 Real results</Eyebrow>
-            <h2 className="pb-h2">Trusted by 100+ D2C brands</h2>
-          </motion.div>
-
-          <motion.div
-            className="pb-grid-3"
-            variants={containerVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
+            viewport={{ once: true, margin: "-100px" }}
           >
             {[
-              { metric: "8.3x", label: "RTO Reduction", icon: "📉" },
-              { metric: "₹4.2L", label: "COD Float Freed", icon: "💰" },
-              { metric: "96%", label: "Autonomous Resolution", icon: "🤖" },
-              { metric: "3.2x", label: "Conversion Lift", icon: "📈" },
-              { metric: "48h", label: "Return Fulfillment", icon: "📦" },
-              { metric: "100+", label: "D2C Brands Using", icon: "🌍" },
-            ].map((stat) => (
-              <motion.div
-                key={stat.metric}
-                variants={itemVariants}
-                whileHover={{ y: -8 }}
-              >
-                <Card padding="feature" className="text-center pb-3d-card relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-br from-lime-400 to-blue-400 opacity-0 group-hover:opacity-5 rounded-2xl" />
+              {
+                number: "01",
+                title: "Connect",
+                timeline: "Day 1",
+                description: "Install on Shopify. We ingest your order history, shipment data, and customer interactions. Your business becomes legible to AI.",
+              },
+              {
+                number: "02",
+                title: "Learn",
+                timeline: "Days 2-14",
+                description: "Agents observe patterns. RTO model trains on your shipping corridors. Personalization models compile. The system builds context.",
+              },
+              {
+                number: "03",
+                title: "Automate",
+                timeline: "Day 15+",
+                description: "Every decision flows through AI. Checkout scoring, support responses, return approvals, marketing sends. Full operational autonomy.",
+              },
+            ].map((phase, idx) => (
+              <motion.div key={phase.number} variants={itemVariants}>
+                <div className="relative">
+                  {/* Connection line */}
+                  {idx < 2 && (
+                    <div className="hidden md:block absolute top-24 -right-6 w-12 h-1 bg-gradient-to-r from-blue-400 to-transparent" />
+                  )}
 
-                  <div className="text-5xl mb-4">{stat.icon}</div>
-                  <div className="text-4xl font-bold mb-2 text-transparent bg-clip-text pb-gradient-animated" style={{ backgroundSize: "200% 200%" }}>
-                    {stat.metric}
+                  <div className="mb-8">
+                    <div className="text-7xl font-display font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-purple-500">
+                      {phase.number}
+                    </div>
                   </div>
-                  <p className="text-[var(--text-2)]">{stat.label}</p>
-                </Card>
+
+                  <div className="inline-block px-3 py-1 rounded-full bg-blue-50 border border-blue-200/50 mb-4">
+                    <span className="text-sm font-medium text-blue-900">{phase.timeline}</span>
+                  </div>
+
+                  <h3 className="text-3xl font-bold text-[var(--forest)] mb-4">{phase.title}</h3>
+                  <p className="text-lg text-[var(--text-2)] leading-relaxed">{phase.description}</p>
+                </div>
               </motion.div>
             ))}
           </motion.div>
         </div>
       </section>
 
-      {/* === PRICING === */}
-      <section className="pb-section bg-gradient-to-b from-[var(--canvas)] to-[var(--soft)]">
+      {/* === TRANSFORMATION === */}
+      <section className="py-32 bg-gradient-to-b from-blue-50/50 to-white">
         <div className="pb-container">
           <motion.div
-            className="text-center mb-16"
-            initial={{ opacity: 0, y: 20 }}
+            className="text-center mb-20"
+            initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
+            transition={{ duration: 0.7 }}
           >
-            <Eyebrow>💳 Transparent pricing</Eyebrow>
-            <h2 className="pb-h2">Built for brands at every scale</h2>
+            <h2 className="text-5xl md:text-6xl font-display font-bold text-[var(--forest)] mb-6">
+              From manual operations to intelligent systems.
+            </h2>
+          </motion.div>
+
+          <motion.div
+            className="grid grid-cols-1 lg:grid-cols-2 gap-12"
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+          >
+            <motion.div
+              variants={itemVariants}
+              className="space-y-6 p-12 rounded-2xl bg-gradient-to-br from-red-50 to-red-50/50 border border-red-200/30"
+            >
+              <h3 className="text-2xl font-bold text-red-900 mb-8">Without Pulseback</h3>
+              <ul className="space-y-4">
+                {[
+                  "Abandoned carts missed — manual follow-ups fail to convert",
+                  "Support tickets pile up — customers wait hours for answers",
+                  "RTO rates spike — no predictive scoring to prevent losses",
+                  "Marketing broadcasts underperform — one-size-fits-all messaging",
+                  "Returns backlog grows — manual approvals take weeks",
+                  "Finance operates blind — COD float tracking in spreadsheets",
+                ].map((item) => (
+                  <li key={item} className="flex gap-3 text-red-800">
+                    <span className="text-red-400 font-bold">−</span>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </motion.div>
+
+            <motion.div
+              variants={itemVariants}
+              className="space-y-6 p-12 rounded-2xl bg-gradient-to-br from-emerald-50 to-emerald-50/50 border border-emerald-200/30"
+            >
+              <h3 className="text-2xl font-bold text-emerald-900 mb-8">With Pulseback</h3>
+              <ul className="space-y-4">
+                {[
+                  "35% cart recovery rate — touches 1-3 auto-send based on behavior",
+                  "WISMO resolved in seconds — 96% autonomous without escalation",
+                  "8.3x RTO reduction — intelligent scoring blocks high-risk orders",
+                  "3.2x higher conversion — personalized offers reach right customers",
+                  "Returns handled in 48 hours — auto-approve, auto-pickup scheduled",
+                  "₹4.2L working capital freed — real-time COD tracking by corridor",
+                ].map((item) => (
+                  <li key={item} className="flex gap-3 text-emerald-800">
+                    <span className="text-emerald-500 font-bold">+</span>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* === METRICS === */}
+      <section className="py-32 bg-white">
+        <div className="pb-container">
+          <motion.div
+            className="text-center mb-20"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.7 }}
+          >
+            <h2 className="text-5xl md:text-6xl font-display font-bold text-[var(--forest)]">
+              Proven at scale.
+            </h2>
           </motion.div>
 
           <motion.div
@@ -394,45 +321,137 @@ export default function Home() {
             variants={containerVariants}
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true }}
+            viewport={{ once: true, margin: "-100px" }}
           >
             {[
-              { tier: "Starter", price: "₹29,999", volume: "0-100K monthly orders", features: ["Checkout OS", "WhatsApp Agent", "Basic analytics"] },
-              { tier: "Growth", price: "₹79,999", volume: "100K-500K monthly orders", features: ["All Starter", "+ NDR OS", "+ Retention", "+ Finance"] },
-              { tier: "Enterprise", price: "Custom", volume: "500K+ monthly orders", features: ["All Growth", "Dedicated support", "Custom agents"] },
-            ].map((plan) => (
+              { number: "8.3x", label: "RTO Reduction", context: "Across 100+ merchants" },
+              { number: "₹4.2L", label: "COD Float Freed", context: "Per merchant, annually" },
+              { number: "96%", label: "Autonomous", context: "Customer issues resolved by AI" },
+            ].map((metric) => (
               <motion.div
-                key={plan.tier}
+                key={metric.number}
                 variants={itemVariants}
-                whileHover={{ y: -12 }}
-                className={plan.tier === "Growth" ? "md:scale-105" : ""}
+                className="text-center p-8"
               >
-                <Card padding="feature" className="h-full pb-3d-card flex flex-col">
-                  <h3 className="text-2xl font-bold mb-2">{plan.tier}</h3>
-                  <div className="text-4xl font-bold text-transparent bg-clip-text pb-gradient-animated mb-2" style={{ backgroundSize: "200% 200%" }}>
-                    {plan.price}
-                  </div>
-                  <p className="text-[var(--text-3)] text-sm mb-6">{plan.volume}</p>
-                  <ul className="space-y-2 flex-1 mb-6">
-                    {plan.features.map((feature) => (
-                      <li key={feature} className="flex gap-2 text-[var(--text-2)]">
-                        <span className="text-[var(--lime)]">✓</span>
-                        {feature}
-                      </li>
-                    ))}
-                  </ul>
-                  <Button variant="primary" size="md" href="/contact" className="w-full">
-                    Get started
-                  </Button>
-                </Card>
+                <div className="text-6xl md:text-7xl font-display font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 mb-3">
+                  {metric.number}
+                </div>
+                <p className="text-xl font-bold text-[var(--forest)] mb-2">{metric.label}</p>
+                <p className="text-[var(--text-3)]">{metric.context}</p>
               </motion.div>
             ))}
           </motion.div>
         </div>
       </section>
 
-      {/* === CTA === */}
-      <FinalCTA />
+      {/* === PRICING === */}
+      <section className="py-32 bg-gradient-to-b from-blue-50/50 to-white">
+        <div className="pb-container">
+          <motion.div
+            className="text-center mb-20"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.7 }}
+          >
+            <h2 className="text-5xl md:text-6xl font-display font-bold text-[var(--forest)] mb-4">
+              Transparent pricing.
+            </h2>
+            <p className="text-xl text-[var(--text-2)]">Scale from startup to enterprise.</p>
+          </motion.div>
+
+          <motion.div
+            className="grid grid-cols-1 md:grid-cols-3 gap-8"
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+          >
+            {[
+              {
+                tier: "Starter",
+                price: "₹29,999",
+                volume: "0 to 100K orders/month",
+                features: ["Checkout OS", "Support Agent", "Basic analytics"],
+              },
+              {
+                tier: "Growth",
+                price: "₹79,999",
+                volume: "100K to 500K orders/month",
+                features: ["Everything in Starter", "Logistics Agent", "Retention Agent", "Finance Agent"],
+              },
+              {
+                tier: "Enterprise",
+                price: "Custom",
+                volume: "500K+ orders/month",
+                features: ["All agents fully customized", "Dedicated support", "Custom integrations"],
+              },
+            ].map((plan, idx) => (
+              <motion.div key={plan.tier} variants={itemVariants}>
+                <div className={`p-10 rounded-2xl border transition-all duration-300 h-full flex flex-col ${
+                  idx === 1
+                    ? "border-blue-300 bg-gradient-to-br from-blue-50 to-white ring-2 ring-blue-100"
+                    : "border-gray-200 bg-white hover:border-gray-300"
+                }`}>
+                  <h3 className="text-2xl font-bold text-[var(--forest)] mb-2">{plan.tier}</h3>
+                  <p className="text-[var(--text-3)] mb-6">{plan.volume}</p>
+
+                  <div className="mb-8">
+                    <div className="text-4xl font-display font-bold text-[var(--forest)]">{plan.price}</div>
+                    <p className="text-[var(--text-3)] text-sm mt-1">Per month, billed annually</p>
+                  </div>
+
+                  <ul className="space-y-4 flex-1 mb-8">
+                    {plan.features.map((feature) => (
+                      <li key={feature} className="flex gap-3 text-[var(--text-2)]">
+                        <span className="text-blue-500 font-bold mt-0.5">▪</span>
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <Button
+                    variant={idx === 1 ? "primary" : "secondary"}
+                    size="md"
+                    href="/contact"
+                    className="w-full"
+                  >
+                    Get started
+                  </Button>
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* === FINAL CTA === */}
+      <section className="py-32 bg-gradient-to-r from-blue-900 via-purple-900 to-blue-900 relative overflow-hidden">
+        <ShapeGradient className="absolute inset-0 opacity-30 blur-3xl" />
+
+        <motion.div
+          className="pb-container relative z-10 text-center"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.7 }}
+        >
+          <h2 className="text-5xl md:text-6xl font-display font-bold text-white mb-6">
+            Ready to automate your operations?
+          </h2>
+          <p className="text-xl text-blue-100 max-w-2xl mx-auto mb-12">
+            Join 100+ D2C brands running their business on Pulseback.
+          </p>
+          <div className="flex gap-6 justify-center flex-wrap">
+            <Button variant="primary" size="lg" href="/contact">
+              Request a demo
+            </Button>
+            <Button variant="secondary" size="lg" href="/docs">
+              Read the docs
+            </Button>
+          </div>
+        </motion.div>
+      </section>
 
       {/* === FOOTER === */}
       <Footer />

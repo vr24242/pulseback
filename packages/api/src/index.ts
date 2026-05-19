@@ -34,4 +34,5 @@ export type AppRouter = typeof appRouter
  * Export tRPC utilities and context type for use in consumers
  */
 export { router, publicProcedure, procedure }
+export { createContext } from "./context.js"
 export type { Context } from "./context.js"
